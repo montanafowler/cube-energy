@@ -13,3 +13,4 @@ document.body.appendChild(renderer.domElement);
 
 // Render the scene
 renderer.render(scene, camera);
+console.log("test")
