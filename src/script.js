@@ -1,19 +1,12 @@
 /////////////////////////////////////////////////////////////////////////
 ///// IMPORT
 import './main.css'
+import FlyingCube from './cube.js'
 import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+// import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
-/////////////////////////////////////////////////////////////////////////
-//// DRACO LOADER TO LOAD DRACO COMPRESSED MODELS FROM BLENDER
-const dracoLoader = new DRACOLoader()
-const loader = new GLTFLoader()
-dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/')
-dracoLoader.setDecoderConfig({ type: 'js' })
-loader.setDRACOLoader(dracoLoader)
 
 /////////////////////////////////////////////////////////////////////////
 ///// DIV CONTAINER CREATION TO HOLD THREEJS EXPERIENCE
@@ -82,8 +75,10 @@ scene.add( cube );
 
 // function to set random colors of cube sides
 for( var i=0; i<6; i++ )
-    cube.material[i].color.setHSL( Math.random(), 1, 0.5 );
+    cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
 
+const cube2 = new FlyingCube();
+console.log(cube2.height);
 
 // var object = new THREE.Mesh(
 //             new THREE.BoxGeometry( 2, 2, 2 ),
