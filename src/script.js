@@ -64,44 +64,52 @@ const sunLight = new THREE.DirectionalLight(0xe8c37b, 1.96)
 sunLight.position.set(-69,44,14)
 scene.add(sunLight)
 
-/////////////////////////////////////////////////////////////////////////
-///// LOADING GLB/GLTF MODEL FROM BLENDER
-// loader.load('models/gltf/starter-scene.glb', function (gltf) {
 
-//     scene.add(gltf.scene)
-// })
+/// add cube
+const geometry = new THREE.BoxGeometry( 1, 1, 1 ); 
+// const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
+const colors = [
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+      ]
 
-/////////////////////////////////////////////////////////////////////////
-//// INTRO CAMERA ANIMATION USING TWEEN
-function introAnimation() {
-    controls.enabled = false //disable orbit controls to animate the camera
-    
-    new TWEEN.Tween(camera.position.set(26,4,-35 )).to({ // from camera position
-        x: 16, //desired x position to go
-        y: 50, //desired y position to go
-        z: -0.1 //desired z position to go
-    }, 6500) // time take to animate
-    .delay(1000).easing(TWEEN.Easing.Quartic.InOut).start() // define delay, easing
-    .onComplete(function () { //on finish animation
-        controls.enabled = true //enable orbit controls
-        setOrbitControlsLimits() //enable controls limits
-        TWEEN.remove(this) // remove the animation from memory
-    })
-}
+const cube = new THREE.Mesh( geometry, colors ); 
+scene.add( cube );
 
-introAnimation() // call intro animation on start
+// function to set random colors of cube sides
+for( var i=0; i<6; i++ )
+    cube.material[i].color.setHSL( Math.random(), 1, 0.5 );
 
-/////////////////////////////////////////////////////////////////////////
-//// DEFINE ORBIT CONTROLS LIMITS
-function setOrbitControlsLimits(){
-    controls.enableDamping = true
-    controls.dampingFactor = 0.04
-    controls.minDistance = 35
-    controls.maxDistance = 60
-    controls.enableRotate = true
-    controls.enableZoom = true
-    controls.maxPolarAngle = Math.PI /2.5
-}
+
+// var object = new THREE.Mesh(
+//             new THREE.BoxGeometry( 2, 2, 2 ),
+//       [
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+//       ]
+//     );  
+//         scene.add( object );
+
+
+// trigger recoloring each second
+
+// setInterval( recolor, 1000 );
+
+
+// // function to set random colors of cube sides
+// function recolor( )
+// {
+//     for( var i=0; i<6; i++ )
+//         object.material[i].color.setHSL( Math.random(), 1, 0.5 );
+// }
 
 /////////////////////////////////////////////////////////////////////////
 //// RENDER LOOP FUNCTION
