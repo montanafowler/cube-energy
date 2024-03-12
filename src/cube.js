@@ -1,11 +1,10 @@
 // Declaration
-( function () {
+// ( function () {
 
   class FlyingCube {
-    constructor(x, y) {
+    constructor(scene, x, y) {
       this.size = 2;
-      this.x = x;
-      this.y = y;
+
       // this.getSize = function {
       //   return this.size;
       // };
@@ -32,15 +31,15 @@
       // const cube2 = new FlyingCube();
       // console.log(cube2.height);
       this.getX = function() {
-        return x;
+        return this.size;
       };
     }
 
     // module.exports = { getSize };
   }
 
-  
-} )();
+
+// } )();
 
 // Create Customer class as follows:
 // export default class Customer {

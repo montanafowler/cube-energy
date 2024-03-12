@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///// IMPORT
 import './main.css'
-// import { FlyingCube } from './cube.js'
+// import FlyingCube from './cube.js'
 // import { getSize } from './cube.js'
 import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
