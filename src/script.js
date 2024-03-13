@@ -7,33 +7,54 @@ import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
+const SIZE = 5;
+
+// define colors for the session
+function defineColors() {
+    var colors = []
+    for(var i = 0; i < 6; i++) {
+        console.log(i);
+        colors.push(new THREE.MeshLambertMaterial( {color: 'lightgray'}));
+        colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
+    }
+    return colors;
+}
+const COLORS = defineColors();
+
+
 class FlyingCube {
+    #x;
+    #y;
     constructor(scene, x, y) {
-        this.size = 2;
-        this.x = x;
-        this.y = y;
+        this.#x = x;
+        this.#y = y;
 
         this.getX = function() {
-            return x;
+            return this.#x ? this.#x : 0;
+        };
+
+        this.getY = function() {
+            return this.#y ? this.#y : 0;
         };
 
         /// add cube
-        const geometry = new THREE.BoxGeometry( 1, 1, 1 ); 
-        const colors = [
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-            new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        ]
+        const geometry = new THREE.BoxGeometry(SIZE, SIZE, SIZE); 
+        // const colors = [
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
+        // ]
 
-        const cube = new THREE.Mesh( geometry, colors ); 
-        scene.add( cube );
+        this.cube = new THREE.Mesh(geometry, COLORS); 
+        // scene.add(cube);
+        // this.cube = cube
 
         // function to set random colors of cube sides
-        for( var i=0; i<6; i++ )
-            cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
+        // for( var i=0; i<6; i++ )
+        //     this.cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
     }
 }
 
@@ -108,8 +129,9 @@ scene.add(sunLight)
 //     cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
 
 const cube2 = new FlyingCube(scene, 5, 5);
-var x = cube2.getX();
-console.log(x);
+scene.add(cube2.cube)
+//var x = cube2.getX();
+console.log(cube2.getX());
 
 // var object = new THREE.Mesh(
 //             new THREE.BoxGeometry( 2, 2, 2 ),
@@ -137,6 +159,7 @@ console.log(x);
 //         object.material[i].color.setHSL( Math.random(), 1, 0.5 );
 // }
 
+
 /////////////////////////////////////////////////////////////////////////
 //// RENDER LOOP FUNCTION
 function rendeLoop() {
@@ -151,4 +174,5 @@ function rendeLoop() {
     
 }
 
+// const colors = defineColors()
 rendeLoop() //start rendering
