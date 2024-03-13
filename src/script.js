@@ -7,6 +7,24 @@ import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
+
+////// TODOS
+// write tests
+// remove unecessary files
+// upload to link page
+// move cubes along trajectories in the bounds
+// rotation on all axis
+// readme documentation
+// remove commented code
+// question about normals local/global coordinates will be answered when animating
+// Whenever a normal or face of cube A touches a normal or face of cube B, 
+// of the same color, those normals will become collinear and the cubes involved 
+// will form a rigid "molecule", and continue to travel in the invisible volume 
+// (on a linear trajectory, and rotating around the center of the molecule).
+// As an additional challenge, one could insert new atoms in the scene, 
+// either floating (when clicking in empty space) or merged into the molecule (when clicking on a compatible face).
+
+
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
@@ -65,10 +83,14 @@ class FlyingCube {
         normal.position.x = cubePosition.x + CUBE_SIZE / 2.0 * axisToChange.x * direction;
         normal.position.y = cubePosition.y + CUBE_SIZE / 2.0 * axisToChange.y * direction;
         normal.position.z = cubePosition.z + CUBE_SIZE / 2.0 * axisToChange.z * direction;
+
+        console.log(normal.geometry.boundingBox);
         return normal;
     }
 
     constructor(scene, x, y, z) {
+        // group with normals
+
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
         this.#cube = new THREE.Mesh(geometry, COLORS); 
@@ -82,59 +104,38 @@ class FlyingCube {
             return this.#cube;
         }
 
-        // buildNormal();
-
         // define normals, one for each face
         this.#normals = []
 
-        // var normalGeo = new THREE.BoxGeometry(SIZE, NORM_SIZE, NORM_SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[0]); 
-        // normal.position.x = x + SIZE / 2;
-        // normal.position.y = y;
-        // normal.position.z = z;
+        // face 0, +X
         let normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(1.0, 0.0, 0.0), 1.0, COLORS[0]);
         scene.add(normal)
+        this.#normals.push(normal);
 
-        // var normalGeo = new THREE.BoxGeometry(SIZE, NORM_SIZE, NORM_SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[1]); 
-        // normal.position.x = x - SIZE / 2;
-        // normal.position.y = y;
-        // normal.position.z = z;
-        // scene.add(normal)
+        // face 1, -X
+        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(1.0, 0.0, 0.0), -1.0, COLORS[1]);
+        scene.add(normal);
+        this.#normals.push(normal);
 
-        // var normalGeo = new THREE.BoxGeometry(NORM_SIZE, SIZE, NORM_SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[2]); 
-        // normal.position.x = x;
-        // normal.position.y = y + SIZE / 2;
-        // normal.position.z = z;
-        // scene.add(normal)
+        // face 2, +Y
+        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 1.0, 0.0), 1.0, COLORS[2]);
+        scene.add(normal);
+        this.#normals.push(normal);
 
-        // var normalGeo = new THREE.BoxGeometry(NORM_SIZE, SIZE, NORM_SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[3]); 
-        // normal.position.x = x;
-        // normal.position.y = y - SIZE / 2;
-        // normal.position.z = z;
-        // scene.add(normal)
+        // face 3, -Y
+        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 1.0, 0.0), -1.0, COLORS[3]);
+        scene.add(normal);
+        this.#normals.push(normal);
 
-        // var normalGeo = new THREE.BoxGeometry(NORM_SIZE, NORM_SIZE, SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[4]); 
-        // normal.position.x = x;
-        // normal.position.y = y;
-        // normal.position.z = z + SIZE / 2;
-        // scene.add(normal)
+        // face 4, +Z
+        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 0.0, 1.0), 1.0, COLORS[4]);
+        scene.add(normal);
+        this.#normals.push(normal);
 
-        // var normalGeo = new THREE.BoxGeometry(NORM_SIZE, NORM_SIZE, SIZE);  
-        // var normal = new THREE.Mesh(normalGeo, COLORS[5]); 
-        // normal.position.x = x;
-        // normal.position.y = y;
-        // normal.position.z = z - SIZE / 2;
-        // scene.add(normal)
-
-   
-
-        // for (var i = 0; i < colors.length) {
-        //     #normals.push(new THREE.Mesh(normalGeo, colors[i]); 
-        // }
+        // face 5, -Z
+        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 0.0, 1.0), -1.0, COLORS[5]);
+        scene.add(normal);
+        this.#normals.push(normal);
 
     }
 
@@ -201,8 +202,20 @@ function randomCoord() {
 var cubes = []
 for (var i = 0; i < 5; i++) {
     cubes.push(new FlyingCube(scene, randomCoord(), randomCoord(), randomCoord()))
-    scene.add(cubes[i].getCube());
+    //scene.add(cubes[i].getCube());
 }
+
+/// molecule transformations test
+var molecule = new THREE.Object3D();
+const g = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
+const cube1 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'blue'})); 
+const cube2 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'green'}))
+molecule.add(cube1);
+molecule.add(cube2);
+cube2.position.x = cube2.position.x + CUBE_SIZE;
+scene.add(molecule);
+
+
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -216,6 +229,7 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
+    molecule.translateX(0.1);
     
 }
 
