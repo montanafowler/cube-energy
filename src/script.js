@@ -9,6 +9,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // CUBE SIZE
 const SIZE = 2;
+// NORMAL SIZE
+const NORM_SIZE = 0.1;
 
 // VOLUME: define invisible volume cubes float around in
 const BOUNDS = SIZE * 10;
@@ -17,44 +19,91 @@ const BOUNDS = SIZE * 10;
 // COLORS: define random colors for the session
 function defineColors() {
     var colors = []
-    for(var i = 0; i < 6; i++) {
-        colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
-        colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
-    }
+    // for(var i = 0; i < 6; i++) {
+    //     colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
+    //     colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
+    // }
+
+    colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'black'}));
+
     return colors;
 }
 // all cubes use the same colors
 const COLORS = defineColors();
 
 class FlyingCube {
-    #x;
-    #y;
-    #z;
+    #cube;
+    #normals;
     constructor(scene, x, y, z) {
-        
-        // TODO: delete all of this since position holds all three? just make cube private?
-        this.#x = x;
-        this.#y = y;
-        this.#z = z;
-
-        this.getX = function() {
-            return this.#x ? this.#x : 0;
-        };
-
-        this.getY = function() {
-            return this.#y ? this.#y : 0;
-        };
-
-        this.getZ = function() {
-            return this.#z ? this.#z : 0;
-        };
-
         /// add cube
         const geometry = new THREE.BoxGeometry(SIZE, SIZE, SIZE); 
-        this.cube = new THREE.Mesh(geometry, COLORS); 
-        this.cube.position.x = x;
-        this.cube.position.y = y;
-        this.cube.position.z = z;
+        this.#cube = new THREE.Mesh(geometry, COLORS); 
+        this.#cube.position.x = x;
+        this.#cube.position.y = y;
+        this.#cube.position.z = z;
+
+        // getter function
+        // TODO maybe we just need to provide position and flying cube translates its whole being
+        this.getCube = function() {
+            return this.#cube;
+        }
+
+        // define normals, one for each face
+        this.#normals = []
+
+        var normalGeo = new THREE.BoxGeometry(SIZE, NORM_SIZE, NORM_SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[0]); 
+        normal.position.x = x + SIZE / 2;
+        normal.position.y = y;
+        normal.position.z = z;
+        scene.add(normal)
+
+        var normalGeo = new THREE.BoxGeometry(SIZE, NORM_SIZE, NORM_SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[1]); 
+        normal.position.x = x - SIZE / 2;
+        normal.position.y = y;
+        normal.position.z = z;
+        scene.add(normal)
+
+        var normalGeo = new THREE.BoxGeometry(NORM_SIZE, SIZE, NORM_SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[2]); 
+        normal.position.x = x;
+        normal.position.y = y + SIZE / 2;
+        normal.position.z = z;
+        scene.add(normal)
+
+        var normalGeo = new THREE.BoxGeometry(NORM_SIZE, SIZE, NORM_SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[3]); 
+        normal.position.x = x;
+        normal.position.y = y - SIZE / 2;
+        normal.position.z = z;
+        scene.add(normal)
+
+        var normalGeo = new THREE.BoxGeometry(NORM_SIZE, NORM_SIZE, SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[4]); 
+        normal.position.x = x;
+        normal.position.y = y;
+        normal.position.z = z + SIZE / 2;
+        scene.add(normal)
+
+        var normalGeo = new THREE.BoxGeometry(NORM_SIZE, NORM_SIZE, SIZE);  
+        var normal = new THREE.Mesh(normalGeo, COLORS[5]); 
+        normal.position.x = x;
+        normal.position.y = y;
+        normal.position.z = z - SIZE / 2;
+        scene.add(normal)
+
+
+
+        // for (var i = 0; i < colors.length) {
+        //     #normals.push(new THREE.Mesh(normalGeo, colors[i]); 
+        // }
+
     }
 }
 
@@ -118,7 +167,7 @@ function randomCoord() {
 var cubes = []
 for (var i = 0; i < 5; i++) {
     cubes.push(new FlyingCube(scene, randomCoord(), randomCoord(), randomCoord()))
-    scene.add(cubes[i].cube);
+    scene.add(cubes[i].getCube());
 }
 
 
