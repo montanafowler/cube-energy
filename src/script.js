@@ -7,27 +7,35 @@ import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
-const SIZE = 5;
+// CUBE SIZE
+const SIZE = 2;
 
-// define colors for the session
+// VOLUME: define invisible volume cubes float around in
+const BOUNDS = SIZE * 10;
+
+///////////////////////////////////////////////////////////////////////
+// COLORS: define random colors for the session
 function defineColors() {
     var colors = []
     for(var i = 0; i < 6; i++) {
-        console.log(i);
-        colors.push(new THREE.MeshLambertMaterial( {color: 'lightgray'}));
+        colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
         colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
     }
     return colors;
 }
+// all cubes use the same colors
 const COLORS = defineColors();
-
 
 class FlyingCube {
     #x;
     #y;
-    constructor(scene, x, y) {
+    #z;
+    constructor(scene, x, y, z) {
+        
+        // TODO: delete all of this since position holds all three? just make cube private?
         this.#x = x;
         this.#y = y;
+        this.#z = z;
 
         this.getX = function() {
             return this.#x ? this.#x : 0;
@@ -37,24 +45,16 @@ class FlyingCube {
             return this.#y ? this.#y : 0;
         };
 
+        this.getZ = function() {
+            return this.#z ? this.#z : 0;
+        };
+
         /// add cube
         const geometry = new THREE.BoxGeometry(SIZE, SIZE, SIZE); 
-        // const colors = [
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        //     new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-        // ]
-
         this.cube = new THREE.Mesh(geometry, COLORS); 
-        // scene.add(cube);
-        // this.cube = cube
-
-        // function to set random colors of cube sides
-        // for( var i=0; i<6; i++ )
-        //     this.cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
+        this.cube.position.x = x;
+        this.cube.position.y = y;
+        this.cube.position.z = z;
     }
 }
 
@@ -109,55 +109,17 @@ sunLight.position.set(-69,44,14)
 scene.add(sunLight)
 
 
-// /// add cube
-// const geometry = new THREE.BoxGeometry( 1, 1, 1 ); 
-// // const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} ); 
-// const colors = [
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//       ]
+/////////////////////////////////////////////////////////////////////////
+///// Define Cubes
+function randomCoord() {
+    return Math.random() * BOUNDS - BOUNDS / 2;
+}
 
-// const cube = new THREE.Mesh( geometry, colors ); 
-// scene.add( cube );
-
-// // function to set random colors of cube sides
-// for( var i=0; i<6; i++ )
-//     cube.material[i].color.setRGB( Math.random(), Math.random(), Math.random() );
-
-const cube2 = new FlyingCube(scene, 5, 5);
-scene.add(cube2.cube)
-//var x = cube2.getX();
-console.log(cube2.getX());
-
-// var object = new THREE.Mesh(
-//             new THREE.BoxGeometry( 2, 2, 2 ),
-//       [
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//             new THREE.MeshLambertMaterial( {color: 'lightgray'}),
-//       ]
-//     );  
-//         scene.add( object );
-
-
-// trigger recoloring each second
-
-// setInterval( recolor, 1000 );
-
-
-// // function to set random colors of cube sides
-// function recolor( )
-// {
-//     for( var i=0; i<6; i++ )
-//         object.material[i].color.setHSL( Math.random(), 1, 0.5 );
-// }
+var cubes = []
+for (var i = 0; i < 5; i++) {
+    cubes.push(new FlyingCube(scene, randomCoord(), randomCoord(), randomCoord()))
+    scene.add(cubes[i].cube);
+}
 
 
 /////////////////////////////////////////////////////////////////////////
