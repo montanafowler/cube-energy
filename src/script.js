@@ -271,7 +271,9 @@ function positionInBounds(position) {
 
 function animate(molecule) {
     // local rotation on all three axes
-
+    molecule.object.rotateX(0.02 * Math.random());
+    molecule.object.rotateY(0.02 * Math.random());
+    molecule.object.rotateZ(-0.02 * Math.random());
 
     // translate in direction if in bounds, if not, reflect vector with a little randomness ?
     // if (positionInBounds(molecule.direction * 0.1 + molecule.object.position)) {
@@ -279,6 +281,7 @@ function animate(molecule) {
     if (positionInBounds(molecule.object.position.addScaledVector(molecule.direction, variedStep))) {
         molecule.object.translateOnAxis(molecule.direction, variedStep);
     } else {
+        // TODO maybe make reflect about the normal of the face they hit
         molecule.direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
     }
     
