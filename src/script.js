@@ -202,18 +202,18 @@ function randomCoord() {
 var cubes = []
 for (var i = 0; i < 5; i++) {
     cubes.push(new FlyingCube(scene, randomCoord(), randomCoord(), randomCoord()))
-    //scene.add(cubes[i].getCube());
+    scene.add(cubes[i].getCube());
 }
 
 /// molecule transformations test
-var molecule = new THREE.Object3D();
-const g = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
-const cube1 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'blue'})); 
-const cube2 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'green'}))
-molecule.add(cube1);
-molecule.add(cube2);
-cube2.position.x = cube2.position.x + CUBE_SIZE;
-scene.add(molecule);
+// var molecule = new THREE.Object3D();
+// const g = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
+// const cube1 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'blue'})); 
+// const cube2 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'green'}))
+// molecule.add(cube1);
+// molecule.add(cube2);
+// cube2.position.x = cube2.position.x + CUBE_SIZE;
+// scene.add(molecule);
 
 
 
