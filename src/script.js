@@ -106,8 +106,7 @@ class Atom {
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
         this.#cube = new THREE.Mesh(geometry, COLORS); 
 
-        // getter function
-        // TODO maybe we just need to provide position and flying cube translates its whole being
+        // getter function for 3d cube object for scene graph
         this.getCube = function() {
             return this.#cube;
         }
@@ -129,15 +128,35 @@ class Atom {
 }
 
 
-do i need a molecule class?
 class Molecule {
     #object;
     #direction;
 
     constructor() {
         // 3D model
+        this.#object = new THREE.Object3D();
+        this.#object.position.x = randomCoord();
+        this.#object.position.y = randomCoord();
+        this.#object.position.z = randomCoord();
 
-        // gett
+        // parent a cube to the molecule
+        this.#object.add(new Atom().getCube());
+        
+        // set the direction
+        this.#direction = Math.random() * 2 * Math.PI;
+        console.log(this.#direction);
+    }
+
+    get object() {
+        return this.#object;
+    }
+
+    get direction() {
+        return this.#direction;
+    }
+
+    set direction(dir) {
+        this.#direction = dir;
     }
 }
 
@@ -201,15 +220,12 @@ function randomCoord() {
 let molecules = [];
 let molecule;
 for (let i = 0; i < 5; i++) {
-    molecule = new THREE.Object3D();
-    molecule.position.x = randomCoord();
-    molecule.position.y = randomCoord();
-    molecule.position.z = randomCoord();
-
-    // parent the cube to the molecule
-    molecule.add(new Atom().getCube());
+    molecule = new Molecule();
+    console.log(molecule.direction);
+    console.log(molecule.object);
+    console.log("molecule ^^");
     molecules.push(molecule);
-    scene.add(molecule);
+    scene.add(molecule.object);
 }
 
 /// molecule transformations test
@@ -238,7 +254,7 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
-    for (molecule in molecules)
+    // for (molecule in molecules)
 
     
 }
