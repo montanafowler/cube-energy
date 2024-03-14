@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 ///// IMPORT
 import './main.css'
-// import FlyingCube from './cube.js'
+// import Atom from './cube.js'
 // import { getSize } from './cube.js'
 import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
@@ -55,7 +55,21 @@ function defineColors() {
 // all cubes use the same colors
 const COLORS = defineColors();
 
-class FlyingCube {
+// define the face axes in an array ordered with the colors
+function defineFaceAxes() {
+    let faces = [];
+    faces.push(new THREE.Vector3(1.0, 0.0, 0.0));
+    faces.push(new THREE.Vector3(1.0, 0.0, 0.0));
+    faces.push(new THREE.Vector3(0.0, 1.0, 0.0));
+    faces.push(new THREE.Vector3(0.0, 1.0, 0.0));
+    faces.push(new THREE.Vector3(0.0, 0.0, 1.0));
+    faces.push(new THREE.Vector3(0.0, 0.0, 1.0));
+    return faces;
+}
+
+const FACE_AXES = defineFaceAxes();
+
+class Atom {
     #cube;
     #normals;
 
@@ -66,11 +80,7 @@ class FlyingCube {
      * direction: -1.0 or 1.0 to shift the normal along the axis in the correct direction for the face
      * return: the normal mesh in the correct position for the cube
     */
-    static buildNormal(cubePosition, axisToChange, direction, color) {
-
-        // question: how does this work with animation if we are sizing with global coordinates?
-        // is animating based off of tranlation/rotation matricies going to be enough or is there a
-        // way to determine relative local coordinates based on the cube in three.js
+    static buildNormal(axisToChange, direction, color) {
 
         // size the normal based off of which axis it points out of
         let xSize = axisToChange.x > 0.0 ? CUBE_SIZE : NORM_SIZE;
@@ -80,11 +90,10 @@ class FlyingCube {
         
         let normal = new THREE.Mesh(normalGeo, color); 
 
-        normal.position.x = cubePosition.x + CUBE_SIZE / 2.0 * axisToChange.x * direction;
-        normal.position.y = cubePosition.y + CUBE_SIZE / 2.0 * axisToChange.y * direction;
-        normal.position.z = cubePosition.z + CUBE_SIZE / 2.0 * axisToChange.z * direction;
+        normal.position.x = CUBE_SIZE / 2.0 * axisToChange.x * direction;
+        normal.position.y = CUBE_SIZE / 2.0 * axisToChange.y * direction;
+        normal.position.z = CUBE_SIZE / 2.0 * axisToChange.z * direction;
 
-        console.log(normal.geometry.boundingBox);
         return normal;
     }
 
@@ -107,35 +116,41 @@ class FlyingCube {
         // define normals, one for each face
         this.#normals = []
 
+// 
+        let direction;
+        for (let i = 0; i < COLORS.length; i++) {
+            console.log(FACE_AXES[i]);
+            direction = i % 2 == 0 ? 1.0 : -1.0;
+            this.#normals.push(Atom.buildNormal(FACE_AXES[i], direction,COLORS[i]));
+        }
+
         // face 0, +X
-        let normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(1.0, 0.0, 0.0), 1.0, COLORS[0]);
-        scene.add(normal)
-        this.#normals.push(normal);
+        // let normal = Atom.buildNormal(new THREE.Vector3(1.0, 0.0, 0.0), 1.0, COLORS[0]);
+        // this.#normals.push(normal);
 
-        // face 1, -X
-        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(1.0, 0.0, 0.0), -1.0, COLORS[1]);
-        scene.add(normal);
-        this.#normals.push(normal);
+        // // face 1, -X
+        // normal = Atom.buildNormal(new THREE.Vector3(1.0, 0.0, 0.0), -1.0, COLORS[1]);
+        // this.#normals.push(normal);
 
-        // face 2, +Y
-        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 1.0, 0.0), 1.0, COLORS[2]);
-        scene.add(normal);
-        this.#normals.push(normal);
+        // // face 2, +Y
+        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 1.0, 0.0), 1.0, COLORS[2]);
+        // this.#normals.push(normal);
 
-        // face 3, -Y
-        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 1.0, 0.0), -1.0, COLORS[3]);
-        scene.add(normal);
-        this.#normals.push(normal);
+        // // face 3, -Y
+        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 1.0, 0.0), -1.0, COLORS[3]);
+        // this.#normals.push(normal);
 
-        // face 4, +Z
-        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 0.0, 1.0), 1.0, COLORS[4]);
-        scene.add(normal);
-        this.#normals.push(normal);
+        // // face 4, +Z
+        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 0.0, 1.0), 1.0, COLORS[4]);
+        // this.#normals.push(normal);
 
-        // face 5, -Z
-        normal = FlyingCube.buildNormal(new THREE.Vector3(x, y, z), new THREE.Vector3(0.0, 0.0, 1.0), -1.0, COLORS[5]);
-        scene.add(normal);
-        this.#normals.push(normal);
+        // // face 5, -Z
+        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 0.0, 1.0), -1.0, COLORS[5]);
+        // this.#normals.push(normal);
+
+        // make all the normals parented to the cube
+        for (let i = 0; i < this.#normals.length; i++)
+            this.#cube.add(this.#normals[i]);
 
     }
 
@@ -163,7 +178,7 @@ container.appendChild(renderer.domElement) // add the renderer to html div
 
 /////////////////////////////////////////////////////////////////////////
 ///// CAMERAS CONFIG
-const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 100)
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 100);
 camera.position.set(34,16,-20)
 scene.add(camera)
 
@@ -201,7 +216,7 @@ function randomCoord() {
 
 var cubes = []
 for (var i = 0; i < 5; i++) {
-    cubes.push(new FlyingCube(scene, randomCoord(), randomCoord(), randomCoord()))
+    cubes.push(new Atom(scene, randomCoord(), randomCoord(), randomCoord()));
     scene.add(cubes[i].getCube());
 }
 
@@ -229,7 +244,7 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
-    molecule.translateX(0.1);
+    // molecule.translateX(0.1);
     
 }
 
