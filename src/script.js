@@ -98,16 +98,13 @@ class Atom {
     }
 
     /**
-     * construct the Atom with its normals at this x, y, z
+     * construct the Atom with its normals at local coordinates 0,0,0
     */
-    constructor(x, y, z) {
+    constructor() {
 
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
         this.#cube = new THREE.Mesh(geometry, COLORS); 
-        this.#cube.position.x = x;
-        this.#cube.position.y = y;
-        this.#cube.position.z = z;
 
         // getter function
         // TODO maybe we just need to provide position and flying cube translates its whole being
@@ -132,12 +129,17 @@ class Atom {
 }
 
 
-// do i need a molecule class?
-// class Molecule {
-//     #object;
+do i need a molecule class?
+class Molecule {
+    #object;
+    #direction;
 
-//     constructor()
-// }
+    constructor() {
+        // 3D model
+
+        // gett
+    }
+}
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -196,10 +198,18 @@ function randomCoord() {
     return Math.random() * BOUNDS - BOUNDS / 2;
 }
 
-var cubes = []
-for (var i = 0; i < 5; i++) {
-    cubes.push(new Atom(scene, randomCoord(), randomCoord(), randomCoord()));
-    scene.add(cubes[i].getCube());
+let molecules = [];
+let molecule;
+for (let i = 0; i < 5; i++) {
+    molecule = new THREE.Object3D();
+    molecule.position.x = randomCoord();
+    molecule.position.y = randomCoord();
+    molecule.position.z = randomCoord();
+
+    // parent the cube to the molecule
+    molecule.add(new Atom().getCube());
+    molecules.push(molecule);
+    scene.add(molecule);
 }
 
 /// molecule transformations test
@@ -212,7 +222,9 @@ for (var i = 0; i < 5; i++) {
 // cube2.position.x = cube2.position.x + CUBE_SIZE;
 // scene.add(molecule);
 
+function translate(molecule) {
 
+}
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -226,7 +238,8 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
-    // molecule.translateX(0.1);
+    for (molecule in molecules)
+
     
 }
 
