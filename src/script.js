@@ -29,9 +29,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
-
 // VOLUME: define invisible volume cubes float around in
 const BOUNDS = CUBE_SIZE * 10;
+// TRANSLATION step distance
+const STEP = 0.1;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
@@ -131,20 +132,38 @@ class Atom {
 class Molecule {
     #object;
     #direction;
+    #atoms;
 
     constructor() {
         // 3D model
         this.#object = new THREE.Object3D();
+
+        // random position
         this.#object.position.x = randomCoord();
         this.#object.position.y = randomCoord();
         this.#object.position.z = randomCoord();
 
-        // parent a cube to the molecule
-        this.#object.add(new Atom().getCube());
-        
-        // set the direction
-        this.#direction = Math.random() * 2 * Math.PI;
-        console.log(this.#direction);
+        // set the direction, a normalized random vector
+        this.#direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+
+        this.#atoms = new Set();
+
+        this.addAtom = function(atom) {
+            this.#atoms.add(atom); // atoms set
+            this.#object.add(atom.getCube()); // scene graph
+        }
+
+        this.removeAtom = function(atom) {
+            this.#atoms.remove(atom); // atoms set
+            this.#object.remove(atom.getCube()); // scene graph
+        }
+
+        // parent an atom to the molecule
+        this.addAtom(new Atom());
+    }
+
+    get atoms() {
+        return this.#atoms;
     }
 
     get object() {
@@ -217,14 +236,13 @@ function randomCoord() {
     return Math.random() * BOUNDS - BOUNDS / 2;
 }
 
-let molecules = [];
+var molecules = new Set();
 let molecule;
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < 2; i++) {
     molecule = new Molecule();
-    console.log(molecule.direction);
-    console.log(molecule.object);
-    console.log("molecule ^^");
-    molecules.push(molecule);
+    molecules.add(molecule);
+
+    // add the 3d obj to the scene graph
     scene.add(molecule.object);
 }
 
@@ -238,7 +256,32 @@ for (let i = 0; i < 5; i++) {
 // cube2.position.x = cube2.position.x + CUBE_SIZE;
 // scene.add(molecule);
 
-function translate(molecule) {
+function positionInBounds(position) {
+    let negBounds = - BOUNDS / 2.0;
+    let posBounds = BOUNDS / 2.0;
+    console.log("POSITION TO CHECK");
+    console.log(position);
+    console.log(negBounds);
+    console.log(posBounds);
+    return (position.x > negBounds && position.x < posBounds 
+        && position.y > negBounds && position.y < posBounds 
+        && position.z > negBounds && position.z < posBounds)
+}
+
+
+function animate(molecule) {
+    // local rotation on all three axes
+
+
+    // translate in direction if in bounds, if not, reflect vector with a little randomness ?
+    // if (positionInBounds(molecule.direction * 0.1 + molecule.object.position)) {
+    let variedStep = STEP * Math.random();
+    if (positionInBounds(molecule.object.position.addScaledVector(molecule.direction, variedStep))) {
+        molecule.object.translateOnAxis(molecule.direction, variedStep);
+    } else {
+        molecule.direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+    }
+    
 
 }
 
@@ -254,7 +297,13 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
-    // for (molecule in molecules)
+    
+    // console.log(molecules.size)
+
+    for (const molecule of molecules) {
+        // console.log(molecule.object);
+        animate(molecule);
+    }
 
     
 }
