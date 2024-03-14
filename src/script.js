@@ -97,8 +97,10 @@ class Atom {
         return normal;
     }
 
-    constructor(scene, x, y, z) {
-        // group with normals
+    /**
+     * construct the Atom with its normals at this x, y, z
+    */
+    constructor(x, y, z) {
 
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
@@ -115,47 +117,27 @@ class Atom {
 
         // define normals, one for each face
         this.#normals = []
-
-// 
         let direction;
         for (let i = 0; i < COLORS.length; i++) {
-            console.log(FACE_AXES[i]);
+            // direction to shift the normal along the axis for the face
             direction = i % 2 == 0 ? 1.0 : -1.0;
+
+            // build the normal
             this.#normals.push(Atom.buildNormal(FACE_AXES[i], direction,COLORS[i]));
-        }
-
-        // face 0, +X
-        // let normal = Atom.buildNormal(new THREE.Vector3(1.0, 0.0, 0.0), 1.0, COLORS[0]);
-        // this.#normals.push(normal);
-
-        // // face 1, -X
-        // normal = Atom.buildNormal(new THREE.Vector3(1.0, 0.0, 0.0), -1.0, COLORS[1]);
-        // this.#normals.push(normal);
-
-        // // face 2, +Y
-        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 1.0, 0.0), 1.0, COLORS[2]);
-        // this.#normals.push(normal);
-
-        // // face 3, -Y
-        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 1.0, 0.0), -1.0, COLORS[3]);
-        // this.#normals.push(normal);
-
-        // // face 4, +Z
-        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 0.0, 1.0), 1.0, COLORS[4]);
-        // this.#normals.push(normal);
-
-        // // face 5, -Z
-        // normal = Atom.buildNormal(new THREE.Vector3(0.0, 0.0, 1.0), -1.0, COLORS[5]);
-        // this.#normals.push(normal);
-
-        // make all the normals parented to the cube
-        for (let i = 0; i < this.#normals.length; i++)
+            
+            // make all the normals parented to the cube
             this.#cube.add(this.#normals[i]);
-
+        }
     }
-
-
 }
+
+
+// do i need a molecule class?
+// class Molecule {
+//     #object;
+
+//     constructor()
+// }
 
 
 /////////////////////////////////////////////////////////////////////////
