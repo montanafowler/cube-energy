@@ -259,10 +259,6 @@ for (let i = 0; i < 2; i++) {
 function positionInBounds(position) {
     let negBounds = - BOUNDS / 2.0;
     let posBounds = BOUNDS / 2.0;
-    console.log("POSITION TO CHECK");
-    console.log(position);
-    console.log(negBounds);
-    console.log(posBounds);
     return (position.x > negBounds && position.x < posBounds 
         && position.y > negBounds && position.y < posBounds 
         && position.z > negBounds && position.z < posBounds)
@@ -284,8 +280,6 @@ function animate(molecule) {
         // TODO maybe make reflect about the normal of the face they hit
         molecule.direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
     }
-    
-
 }
 
 
@@ -300,11 +294,8 @@ function rendeLoop() {
     renderer.render(scene, camera) // render the scene using the camera
 
     requestAnimationFrame(rendeLoop) //loop the render function
-    
-    // console.log(molecules.size)
 
     for (const molecule of molecules) {
-        // console.log(molecule.object);
         animate(molecule);
     }
 
