@@ -6,6 +6,7 @@ import './main.css'
 import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 
 ////// TODOS
@@ -24,7 +25,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 // As an additional challenge, one could insert new atoms in the scene, 
 // either floating (when clicking in empty space) or merged into the molecule (when clicking on a compatible face).
 
-
+// NUMBER OF CUBES
+const NUM_CUBES = 2;
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
@@ -133,6 +135,11 @@ class Molecule {
     #object;
     #direction;
     #atoms;
+    #rotationDirs;
+
+    static randPosNeg() {
+        return Math.random() < 0.5 ? -1.0 : 1.0;
+    }
 
     constructor() {
         // 3D model
@@ -145,6 +152,11 @@ class Molecule {
 
         // set the direction, a normalized random vector
         this.#direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+
+        // make each molecule randomly rotate + or - x, y, z
+        this.#rotationDirs = new THREE.Vector3(Molecule.randPosNeg(), Molecule.randPosNeg(), Molecule.randPosNeg());
+        console.log("rotation dirs");
+        console.log(this.#rotationDirs);
 
         this.#atoms = new Set();
 
@@ -176,6 +188,10 @@ class Molecule {
 
     set direction(dir) {
         this.#direction = dir;
+    }
+
+    get rotationDirs() {
+        return this.#rotationDirs;
     }
 }
 
@@ -238,7 +254,7 @@ function randomCoord() {
 
 var molecules = new Set();
 let molecule;
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < NUM_CUBES; i++) {
     molecule = new Molecule();
     molecules.add(molecule);
 
@@ -256,6 +272,30 @@ for (let i = 0; i < 2; i++) {
 // cube2.position.x = cube2.position.x + CUBE_SIZE;
 // scene.add(molecule);
 
+
+// pseudocode
+// each molecule has an OOB, this includes normals
+// for every molecule, check all others (for now... could do some sorting to help? objs could have IDs)
+//      if OBBs intersect
+//              double loop through atoms of both to find which atoms intersect
+    //              case 1: atom A and atom B don't intersect
+    //                  loop through atoms of molecule w/ fewer children to check OOBs? if none intersect, reject overlap
+    //              case 2: we did find an OOB intersection(s) with an atom 
+    //                  which of our OOB's is intersecting with the intersections we found ?
+    //                  Are we actually intersecting with one of its normals or cube?
+    //                  double loop to find which normals/cubes interset
+    //                  
+    //                  case 3: actually one of our OOBs cubes/normals does not intersect, reject collision
+    //                  case 4: we did find an intersection between a cube & normal
+    //                      make the normal the parent molecule (easier to become collinear w/ normal)
+    //                  case 5: we found intersection between 2 normals
+    //                      make them collinear to one of them
+    //                  case 6: we found an intersection between two
+
+//          see what I hit for molecule A on this ray        
+// loop through each face / normal to see if they intersect...
+//                how do I do this?
+
 function positionInBounds(position) {
     let negBounds = - BOUNDS / 2.0;
     let posBounds = BOUNDS / 2.0;
@@ -267,9 +307,9 @@ function positionInBounds(position) {
 
 function animate(molecule) {
     // local rotation on all three axes
-    molecule.object.rotateX(0.02 * Math.random());
-    molecule.object.rotateY(0.02 * Math.random());
-    molecule.object.rotateZ(-0.02 * Math.random());
+    molecule.object.rotateX(0.02 * Math.random() * molecule.rotationDirs.x);
+    molecule.object.rotateY(0.02 * Math.random() * molecule.rotationDirs.y);
+    molecule.object.rotateZ(0.02 * Math.random() * molecule.rotationDirs.z);
 
     // translate in direction if in bounds, if not, reflect vector with a little randomness ?
     // if (positionInBounds(molecule.direction * 0.1 + molecule.object.position)) {
@@ -297,9 +337,7 @@ function rendeLoop() {
 
     for (const molecule of molecules) {
         animate(molecule);
-    }
-
-    
+    }    
 }
 
 // const colors = defineColors()
