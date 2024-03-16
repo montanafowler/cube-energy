@@ -78,6 +78,7 @@ const FACE_AXES = defineFaceAxes();
 
 class Atom {
     #id;
+    #object;
     #cube;
     #normals; // TODO change to dictionary of normal ID <#id-x1, normal?>
     #boundingBox;
@@ -114,9 +115,15 @@ class Atom {
         this.#id = NEXT_ID;
         NEXT_ID++;
 
+        // 3D model
+        this.#object = new THREE.Object3D();
+
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
         this.#cube = new THREE.Mesh(geometry, COLORS); 
+
+        // make the cube mesh a child of the object
+        this.#object.add(this.#cube);
         console.log(`created cube ${this.#id}, ${this.#cube}`)
 
         // define normals, one for each face
@@ -130,7 +137,7 @@ class Atom {
             this.#normals.push(Atom.buildNormal(FACE_AXES[i], direction,COLORS[i]));
             
             // make all the normals parented to the cube
-            this.#cube.add(this.#normals[i]);
+            this.#object.add(this.#normals[i]);
         }
     }
 
@@ -139,7 +146,11 @@ class Atom {
     }
 
     get boundingBox() {
-        return new THREE.Box3().setFromObject(this.#cube);
+        return new THREE.Box3().setFromObject(this.#object);
+    }
+
+    get object() {
+        return this.#object;
     }
 
     get cube() {
@@ -189,12 +200,12 @@ class Molecule {
 
         this.addAtom = function(atom) {
             this.#atoms.add(atom); // atoms set
-            this.#object.add(atom.cube); // scene graph
+            this.#object.add(atom.object); // scene graph
         }
 
         this.removeAtom = function(atom) {
             this.#atoms.remove(atom); // atoms set
-            this.#object.remove(atom.cube); // scene graph
+            this.#object.remove(atom.object); // scene graph
         }
 
         // parent an atom to the molecule
@@ -413,9 +424,11 @@ function analyzeAtomCollision(atomA, atomB) {
         aNormalBB = new THREE.Box3().setFromObject(atomA.normals[i]);
         bNormalBB = new THREE.Box3().setFromObject(atomB.normals[i]);
 
-        console.log(i);
-        console.log(aNormalBB);
-        console.log(bNormalBB);
+        // if two normals of the same color intersect, merge molecules
+        if (aNormalBB.intersectsBox(bNormalBB)) {
+            // TODO merge
+            console.log("MERGE!");
+        }
     }
 
     // see what objects we intersect
