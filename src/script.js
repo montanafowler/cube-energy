@@ -37,12 +37,14 @@ const BOUNDS = CUBE_SIZE * 3;
 const STEP = 0.1;
 // shows the next available id
 let NEXT_ID = 0;
+// sides of cube, don't change
+let NUM_SIDES = 6;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
 function defineColors() {
     let colors = []
-    for(let i = 0; i < 6; i++) {
+    for(let i = 0; i < NUM_SIDES; i++) {
         colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
         colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
     }
@@ -78,7 +80,7 @@ class Atom {
     #id;
     #cube;
     #normals; // TODO change to dictionary of normal ID <#id-x1, normal?>
-    // where do i get OOB
+    #boundingBox;
 
     /*
      * build the normal for the face given the provided axis to change, and the direction
@@ -115,11 +117,7 @@ class Atom {
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
         this.#cube = new THREE.Mesh(geometry, COLORS); 
-
-        // getter function for 3d cube object for scene graph
-        this.getCube = function() {
-            return this.#cube;
-        }
+        console.log(`created cube ${this.#id}, ${this.#cube}`)
 
         // define normals, one for each face
         this.#normals = []
@@ -138,6 +136,18 @@ class Atom {
 
     get id() {
         return this.#id;
+    }
+
+    get boundingBox() {
+        return new THREE.Box3().setFromObject(this.#cube);
+    }
+
+    get cube() {
+        return this.#cube;
+    }
+
+    get normals() {
+        return this.#normals;
     }
 }
 
@@ -179,12 +189,12 @@ class Molecule {
 
         this.addAtom = function(atom) {
             this.#atoms.add(atom); // atoms set
-            this.#object.add(atom.getCube()); // scene graph
+            this.#object.add(atom.cube); // scene graph
         }
 
         this.removeAtom = function(atom) {
             this.#atoms.remove(atom); // atoms set
-            this.#object.remove(atom.getCube()); // scene graph
+            this.#object.remove(atom.cube); // scene graph
         }
 
         // parent an atom to the molecule
@@ -193,6 +203,7 @@ class Molecule {
         this.updateBoundingBox = function() {
             this.#boundingBox = new THREE.Box3().setFromObject(this.#object);
         }
+        this.updateBoundingBox();
     }
 
     get atoms() {
@@ -274,6 +285,10 @@ const sunLight = new THREE.DirectionalLight(0xe8c37b, 1.96)
 sunLight.position.set(-69,44,14)
 scene.add(sunLight)
 
+/////////////////////////////////////////////////////////////////////////
+///// Define Raycaster
+const raycaster = new THREE.Raycaster();
+
 
 /////////////////////////////////////////////////////////////////////////
 ///// Define Cubes
@@ -290,6 +305,8 @@ for (let i = 0; i < NUM_CUBES; i++) {
     // add the 3d obj to the scene graph
     scene.add(molecule.object);
 }
+
+
 
 // set up set of original molecule pairs
 // TODO if useful later, for now do double for loop
@@ -371,6 +388,72 @@ scene.add(corner8);
 // object.userData.obb.applyMatrix4( object.matrixWorld );
 
 // molecules could become dead, so i create the pairs once and if we visit dead molecules we remove them from the set
+// TODO maybe make molecules and pairs extend interface since they have the same bounding box functionality? if time
+
+// TO TEST: multiple atoms in one molecule
+
+function analyzeAtomCollision(atomA, atomB) {
+    // shoot ray from atomA to atomB
+    // const centerA = atomA.cube;
+    // const centerB = atomB.cube.position;
+    // const directionAtoB = centerB.sub(centerA).normalized();
+
+    console.log("analyzeAtomCollision");
+    console.log(atomA.cube);
+
+    let aNormalBB;
+    let bNormalBB;
+
+    if (atomA.normals.length != NUM_SIDES || atomB.normals.length != NUM_SIDES)
+        throw new Error("Normals length not equal to number of cube sides.");
+
+    // are any normals of the same color intersecting?
+    for (let i = 0; i < NUM_SIDES; i++) {
+        // normals are in ordered list so the same color matches at each index
+        aNormalBB = new THREE.Box3().setFromObject(atomA.normals[i]);
+        bNormalBB = new THREE.Box3().setFromObject(atomB.normals[i]);
+
+        console.log(i);
+        console.log(aNormalBB);
+        console.log(bNormalBB);
+    }
+
+    // see what objects we intersect
+
+// .intersectsTriangle ( triangle : Triangle ) : Boolean
+// triangle - Triangle to check for intersection against.
+
+// Determines whether or not this box intersects triangle.
+
+    // cube bounding boxes
+    // const aCubeBB = new THREE.Box3().setFromObject(atomA.getCube());
+    // const bCubeBB = new THREE.Box3().setFromObject(atomA.getCube());
+
+  //   event.preventDefault();
+
+  // mouse.x = (event.clientX / renderer.domElement.offsetWidth) * 2 - 1;
+  // mouse.y = -(event.clientY / renderer.domElement.offsetHeight) * 2 + 1;
+
+  // caster.setFromCamera(mouse, camera);
+
+  // const intersects = caster.intersectObjects(scene.children);
+
+  // if (intersects.length > 0) {
+
+  //   const intersection = intersects[0];
+
+  //   const colorAttribute = intersection.object.geometry.getAttribute('color');
+  //   const face = intersection.face;
+
+  //   const color = new THREE.Color(Math.random() * 0xff0000);
+
+  //   colorAttribute.setXYZ(face.a, color.r, color.g, color.b);
+  //   colorAttribute.setXYZ(face.b, color.r, color.g, color.b);
+  //   colorAttribute.setXYZ(face.c, color.r, color.g, color.b);
+
+  //   colorAttribute.needsUpdate = true;
+}
+
 
 function findCollisions() {
     // preprocess: update the molecule bounding boxes first
@@ -378,24 +461,52 @@ function findCollisions() {
         mol.updateBoundingBox();
     }
 
-    let moleculesCompared = new Set();
+    let comparisons = new Set();
 
     for (const molA of molecules.values()) {
         for (const molB of molecules.values()) {
             // if we have already compared these two molecules or they are the same, skip
-            if (moleculesCompared.has(`${molA.id}_${molB.id}`) || molA.id == molB.id) {
+            if (comparisons.has(`${molA.id}_${molB.id}`) || molA.id == molB.id) {
                 continue;
             }
 
-            console.log(`${molA.id}_${molB.id}`);
-            // check if bounding boxes intersect
-            if (molA.boundingBox.intersectsBox(molB.boundingBox)){
-                console.log(`${molA.id} intersects ${molB.id}`);
+            // add unordered pair to visited set
+            comparisons.add(`${molA.id}_${molB.id}`);
+            comparisons.add(`${molB.id}_${molA.id}`);
+
+            console.log(`comparing molecules ${molA.id}_${molB.id}`);
+
+            // if bounding boxes do not intersect, skip
+            if (!molA.boundingBox.intersectsBox(molB.boundingBox)) {
+                continue;
             }
 
-            // add unordered pair to visited set
-            moleculesCompared.add(`${molA.id}_${molB.id}`);
-            moleculesCompared.add(`${molB.id}_${molA.id}`);
+            console.log(`${molA.id} intersects ${molB.id}`);
+
+            // now compare the atoms in the colliding molecules to see which overlap
+            for (const atomA of molA.atoms) {
+                for (const atomB of molB.atoms) {
+                    // if we have already compared these two atoms or they are the same, skip
+                    if (comparisons.has(`${atomA.id}_${atomB.id}`) || atomA.id == atomB.id) {
+                        continue;
+                    }
+
+                    // add unordered pair to visited set
+                    comparisons.add(`${atomA.id}_${atomB.id}`);
+                    comparisons.add(`${atomB.id}_${atomA.id}`);
+
+                    console.log(`comparing atoms ${atomA.id}_${atomB.id}`);
+
+                    // if bounding boxes do not intersect, skip
+                    if (!atomA.boundingBox.intersectsBox(atomB.boundingBox)) {
+                        continue;
+                    }
+
+                    console.log(`${atomA.id} intersects ${atomB.id}`);
+                    console.log(atomA.cube);
+                    analyzeAtomCollision(atomA, atomB);
+                }
+            }
         }
     }
 }
