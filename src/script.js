@@ -262,6 +262,34 @@ for (let i = 0; i < NUM_CUBES; i++) {
     scene.add(molecule.object);
 }
 
+// show bounds debugging
+const geometry = new THREE.BoxGeometry(.5, .5, .5); 
+const corner1 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
+const corner2 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
+const corner3 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
+const corner4 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
+corner1.translateOnAxis(new THREE.Vector3(1.0, 1.0, 1.0), BOUNDS / 2);
+corner2.translateOnAxis(new THREE.Vector3(-1.0, 1.0, 1.0), BOUNDS / 2);
+corner3.translateOnAxis(new THREE.Vector3(-1.0, 1.0, -1.0), BOUNDS / 2);
+corner4.translateOnAxis(new THREE.Vector3(1.0, 1.0, -1.0), BOUNDS / 2);
+
+const corner5 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
+const corner6 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
+const corner7 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
+const corner8 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
+corner5.translateOnAxis(new THREE.Vector3(1.0, -1.0, 1.0), BOUNDS / 2);
+corner6.translateOnAxis(new THREE.Vector3(-1.0, -1.0, 1.0), BOUNDS / 2);
+corner7.translateOnAxis(new THREE.Vector3(-1.0, -1.0, -1.0), BOUNDS / 2);
+corner8.translateOnAxis(new THREE.Vector3(1.0, -1.0, -1.0), BOUNDS / 2);
+scene.add(corner1);
+scene.add(corner2);
+scene.add(corner3);
+scene.add(corner4);
+scene.add(corner5);
+scene.add(corner6);
+scene.add(corner7);
+scene.add(corner8);
+
 /// molecule transformations test
 // var molecule = new THREE.Object3D();
 // const g = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
@@ -300,8 +328,26 @@ function positionInBounds(position) {
     let negBounds = - BOUNDS / 2.0;
     let posBounds = BOUNDS / 2.0;
     return (position.x > negBounds && position.x < posBounds 
-        && position.y > negBounds && position.y < posBounds 
-        && position.z > negBounds && position.z < posBounds)
+         && position.y > negBounds && position.y < posBounds 
+         && position.z > negBounds && position.z < posBounds)
+}
+
+function reflectOffBoundingVolume(position) {
+    let negBounds = - BOUNDS / 2.0;
+    let posBounds = BOUNDS / 2.0;
+    if (position.x < negBounds)
+        return new THREE.Vector3(1.0, 0.0, 0.0); // reflect off +X normal
+    if (position.x > posBounds)
+        return new THREE.Vector3(-1.0, 0.0, 0.0); // reflect off -X normal
+    if (position.y < negBounds)
+        return new THREE.Vector3(0.0, 1.0, 0.0); // reflect off +Y normal
+    if (position.y > posBounds)
+        return new THREE.Vector3(0.0, -1.0, 0.0); // reflect off -Y normal
+    if (position.z < negBounds)
+        return new THREE.Vector3(0.0, 0.0, 1.0); // reflect off +Z normal
+    if (position.z > posBounds)
+        return new THREE.Vector3(0.0, 0.0, -1.0); // reflect off -Z normal
+    throw new Error("Position not outside Bounding Volume"); 
 }
 
 
@@ -314,10 +360,14 @@ function animate(molecule) {
     // translate in direction if in bounds, if not, reflect vector with a little randomness ?
     // if (positionInBounds(molecule.direction * 0.1 + molecule.object.position)) {
     let variedStep = STEP * Math.random();
-    if (positionInBounds(molecule.object.position.addScaledVector(molecule.direction, variedStep))) {
+    let futurePosition = molecule.object.position.addScaledVector(molecule.direction, variedStep);
+    if (positionInBounds(futurePosition)) {
+        // move molecule to the position
         molecule.object.translateOnAxis(molecule.direction, variedStep);
     } else {
-        // TODO maybe make reflect about the normal of the face they hit
+        // TODO reflect has bug where they fly out of the volume
+        // let normal = reflectOffBoundingVolume(futurePosition);
+        // molecule.direction = molecule.direction.reflect(normal).normalize();
         molecule.direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
     }
 }
