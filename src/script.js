@@ -32,7 +32,7 @@ const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 10;
+const BOUNDS = CUBE_SIZE * 3;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -145,6 +145,7 @@ class Atom {
 class Molecule {
     #id;
     #object;
+    #boundingBox;
     #direction;
     #atoms;
     #rotationDirs;
@@ -188,6 +189,10 @@ class Molecule {
 
         // parent an atom to the molecule
         this.addAtom(new Atom());
+
+        this.updateBoundingBox = function() {
+            this.#boundingBox = new THREE.Box3().setFromObject(this.#object);
+        }
     }
 
     get atoms() {
@@ -212,6 +217,10 @@ class Molecule {
 
     get id() {
         return this.#id;
+    }
+
+    get boundingBox() {
+        return this.#boundingBox;
     }
 }
 
@@ -282,6 +291,20 @@ for (let i = 0; i < NUM_CUBES; i++) {
     scene.add(molecule.object);
 }
 
+// set up set of original molecule pairs
+// TODO if useful later, for now do double for loop
+// let visited = new Set();
+// let pairs = new Set();
+// for (const molA of molecules.values()) {
+//     for (const molB of molecules.values()) {
+//         if !(visited.has(molA.id)) {
+//             pairs.add(`${molA.id}_${molB.id}`)
+//             visited.add(molA);
+//         }
+//     }
+// } 
+
+
 // show bounds debugging
 const geometry = new THREE.BoxGeometry(.5, .5, .5); 
 const corner1 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
@@ -344,13 +367,45 @@ scene.add(corner8);
     //                      does cubeB intersect normals A?
     //
 
+// object.userData.obb.copy( object.geometry.userData.obb );
+// object.userData.obb.applyMatrix4( object.matrixWorld );
+
+// molecules could become dead, so i create the pairs once and if we visit dead molecules we remove them from the set
+
+function findCollisions() {
+    // preprocess: update the molecule bounding boxes first
+    for (const mol of molecules.values()) {
+        mol.updateBoundingBox();
+    }
+
+    let moleculesCompared = new Set();
+
+    for (const molA of molecules.values()) {
+        for (const molB of molecules.values()) {
+            // if we have already compared these two molecules or they are the same, skip
+            if (moleculesCompared.has(`${molA.id}_${molB.id}`) || molA.id == molB.id) {
+                continue;
+            }
+
+            console.log(`${molA.id}_${molB.id}`);
+            // check if bounding boxes intersect
+            if (molA.boundingBox.intersectsBox(molB.boundingBox)){
+                console.log(`${molA.id} intersects ${molB.id}`);
+            }
+
+            // add unordered pair to visited set
+            moleculesCompared.add(`${molA.id}_${molB.id}`);
+            moleculesCompared.add(`${molB.id}_${molA.id}`);
+        }
+    }
+}
 
 
 
 
 
 
-    
+
     //                      case 3: actually one of our OOBs cubes/normals does not intersect, reject collision
     //                      case 4: we did find an intersection between a cube & normal
     //                          make the normal the parent molecule (easier to become collinear w/ normal)
@@ -430,10 +485,10 @@ function rendeLoop() {
 
     requestAnimationFrame(rendeLoop) //loop the render function
 
-    for (const molecule of molecules) {
-        animate(molecule);
-    }    
+    // for (const molecule of molecules) {
+    //     animate(molecule);
+    // }    
 }
-
+findCollisions();
 // const colors = defineColors()
 rendeLoop() //start rendering
