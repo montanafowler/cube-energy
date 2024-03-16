@@ -35,12 +35,14 @@ const NORM_SIZE = 0.1;
 const BOUNDS = CUBE_SIZE * 10;
 // TRANSLATION step distance
 const STEP = 0.1;
+// shows the next available id
+let NEXT_ID = 0;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
 function defineColors() {
-    var colors = []
-    for(var i = 0; i < 6; i++) {
+    let colors = []
+    for(let i = 0; i < 6; i++) {
         colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
         colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
     }
@@ -73,8 +75,10 @@ function defineFaceAxes() {
 const FACE_AXES = defineFaceAxes();
 
 class Atom {
+    #id;
     #cube;
-    #normals;
+    #normals; // TODO change to dictionary of normal ID <#id-x1, normal?>
+    // where do i get OOB
 
     /*
      * build the normal for the face given the provided axis to change, and the direction
@@ -103,7 +107,10 @@ class Atom {
     /**
      * construct the Atom with its normals at local coordinates 0,0,0
     */
-    constructor() {
+    constructor(uid) {
+        // unique id for atoms
+        this.#id = NEXT_ID;
+        NEXT_ID++;
 
         /// add cube
         const geometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
@@ -128,10 +135,15 @@ class Atom {
             this.#cube.add(this.#normals[i]);
         }
     }
+
+    get id() {
+        return this.#id;
+    }
 }
 
 
 class Molecule {
+    #id;
     #object;
     #direction;
     #atoms;
@@ -142,6 +154,10 @@ class Molecule {
     }
 
     constructor() {
+        // save molecule's unique id
+        this.#id = NEXT_ID;
+        NEXT_ID++;
+
         // 3D model
         this.#object = new THREE.Object3D();
 
@@ -192,6 +208,10 @@ class Molecule {
 
     get rotationDirs() {
         return this.#rotationDirs;
+    }
+
+    get id() {
+        return this.#id;
     }
 }
 
@@ -255,7 +275,7 @@ function randomCoord() {
 var molecules = new Set();
 let molecule;
 for (let i = 0; i < NUM_CUBES; i++) {
-    molecule = new Molecule();
+    molecule = new Molecule(i);
     molecules.add(molecule);
 
     // add the 3d obj to the scene graph
@@ -303,22 +323,43 @@ scene.add(corner8);
 
 // pseudocode
 // each molecule has an OOB, this includes normals
+// cache which ones we have checked in dictionary, or just list of molecule pairs ? AB, BC, AC
 // for every molecule, check all others (for now... could do some sorting to help? objs could have IDs)
 //      if OBBs intersect
-//              double loop through atoms of both to find which atoms intersect
+//              if we haven't already checked Atom A et Atom B (could loop through pairs, so not double loop)
     //              case 1: atom A and atom B don't intersect
-    //                  loop through atoms of molecule w/ fewer children to check OOBs? if none intersect, reject overlap
-    //              case 2: we did find an OOB intersection(s) with an atom 
+    //                  continue
+    //              case 2: atom A and atom B intersect
     //                  which of our OOB's is intersecting with the intersections we found ?
     //                  Are we actually intersecting with one of its normals or cube?
-    //                  double loop to find which normals/cubes interset
-    //                  
-    //                  case 3: actually one of our OOBs cubes/normals does not intersect, reject collision
-    //                  case 4: we did find an intersection between a cube & normal
-    //                      make the normal the parent molecule (easier to become collinear w/ normal)
-    //                  case 5: we found intersection between 2 normals
-    //                      make them collinear to one of them
-    //                  case 6: we found an intersection between two
+    //                      do cubes intersect?
+    //                          if so, check faces
+    //                      list nAs, nBs (ids for normals?) or just ordered list still works?
+    //                          compare n0A to n0B ob (same color, so do they intersect?)
+    //                              if n0A intersects n0B
+    //                                  merge into one molecule! 
+    //                                  break loops
+    //                      does cubeA intersect normals B?
+    //                          
+    //                      does cubeB intersect normals A?
+    //
+
+
+
+
+
+
+
+    
+    //                      case 3: actually one of our OOBs cubes/normals does not intersect, reject collision
+    //                      case 4: we did find an intersection between a cube & normal
+    //                          make the normal the parent molecule (easier to become collinear w/ normal)
+    //                      case 5: we found intersection between 2 normals
+    //                          make them collinear to one of them
+    //                      case 6: we found an intersection between two
+
+
+//loop through atoms of molecule w/ fewer children to check OOBs? if none intersect, reject overlap
 
 //          see what I hit for molecule A on this ray        
 // loop through each face / normal to see if they intersect...
@@ -332,43 +373,47 @@ function positionInBounds(position) {
          && position.z > negBounds && position.z < posBounds)
 }
 
-function reflectOffBoundingVolume(position) {
+/*
+ * build the normal to reflect around when we hit the bounding volume
+*/
+function getNormalOffBoundingVolume(position) {
     let negBounds = - BOUNDS / 2.0;
     let posBounds = BOUNDS / 2.0;
+    let normal = new THREE.Vector3(0.0, 0.0, 0.0);
     if (position.x < negBounds)
-        return new THREE.Vector3(1.0, 0.0, 0.0); // reflect off +X normal
+        normal.add(new THREE.Vector3(1.0, 0.0, 0.0)); // reflect off +X normal
     if (position.x > posBounds)
-        return new THREE.Vector3(-1.0, 0.0, 0.0); // reflect off -X normal
+        normal.add(new THREE.Vector3(-1.0, 0.0, 0.0)); // reflect off -X normal
     if (position.y < negBounds)
-        return new THREE.Vector3(0.0, 1.0, 0.0); // reflect off +Y normal
+        normal.add(new THREE.Vector3(0.0, 1.0, 0.0)); // reflect off +Y normal
     if (position.y > posBounds)
-        return new THREE.Vector3(0.0, -1.0, 0.0); // reflect off -Y normal
+        normal.add(new THREE.Vector3(0.0, -1.0, 0.0)); // reflect off -Y normal
     if (position.z < negBounds)
-        return new THREE.Vector3(0.0, 0.0, 1.0); // reflect off +Z normal
+        normal.add(new THREE.Vector3(0.0, 0.0, 1.0)); // reflect off +Z normal
     if (position.z > posBounds)
-        return new THREE.Vector3(0.0, 0.0, -1.0); // reflect off -Z normal
-    throw new Error("Position not outside Bounding Volume"); 
+        normal.add(new THREE.Vector3(0.0, 0.0, -1.0)); // reflect off -Z normal
+    return normal; 
 }
 
 
+/*
+ * animate the molecule on all three rotation axes, translate in random directions
+ * if we hit the edge of the bounding volume, reflect off of its normal
+ */
 function animate(molecule) {
     // local rotation on all three axes
     molecule.object.rotateX(0.02 * Math.random() * molecule.rotationDirs.x);
     molecule.object.rotateY(0.02 * Math.random() * molecule.rotationDirs.y);
     molecule.object.rotateZ(0.02 * Math.random() * molecule.rotationDirs.z);
 
-    // translate in direction if in bounds, if not, reflect vector with a little randomness ?
-    // if (positionInBounds(molecule.direction * 0.1 + molecule.object.position)) {
-    let variedStep = STEP * Math.random();
-    let futurePosition = molecule.object.position.addScaledVector(molecule.direction, variedStep);
+    let futurePosition = molecule.object.position.addScaledVector(molecule.direction, STEP);
     if (positionInBounds(futurePosition)) {
         // move molecule to the position
-        molecule.object.translateOnAxis(molecule.direction, variedStep);
+        molecule.object.translateOnAxis(molecule.direction, STEP);
     } else {
-        // TODO reflect has bug where they fly out of the volume
-        // let normal = reflectOffBoundingVolume(futurePosition);
-        // molecule.direction = molecule.direction.reflect(normal).normalize();
-        molecule.direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+        // reflect the direction based on the normal from the bounding volume
+        let normal = getNormalOffBoundingVolume(futurePosition);
+        molecule.direction = molecule.direction.reflect(normal).normalize();
     }
 }
 
