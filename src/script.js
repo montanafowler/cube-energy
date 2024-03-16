@@ -124,7 +124,7 @@ class Atom {
 
         // make the cube mesh a child of the object
         this.#object.add(this.#cube);
-        console.log(`created cube ${this.#id}, ${this.#cube}`)
+        // console.log(`created cube ${this.#id}, ${this.#cube}`)
 
         // define normals, one for each face
         this.#normals = []
@@ -134,7 +134,7 @@ class Atom {
             direction = i % 2 == 0 ? 1.0 : -1.0;
 
             // build the normal
-            this.#normals.push(Atom.buildNormal(FACE_AXES[i], direction,COLORS[i]));
+            this.#normals.push(Atom.buildNormal(FACE_AXES[i], direction, COLORS[i]));
             
             // make all the normals parented to the cube
             this.#object.add(this.#normals[i]);
@@ -193,8 +193,8 @@ class Molecule {
 
         // make each molecule randomly rotate + or - x, y, z
         this.#rotationDirs = new THREE.Vector3(Molecule.randPosNeg(), Molecule.randPosNeg(), Molecule.randPosNeg());
-        console.log("rotation dirs");
-        console.log(this.#rotationDirs);
+        // console.log("rotation dirs");
+        // console.log(this.#rotationDirs);
 
         this.#atoms = new Set();
 
@@ -403,15 +403,10 @@ scene.add(corner8);
 
 // TO TEST: multiple atoms in one molecule
 
-function analyzeAtomCollision(atomA, atomB) {
-    // shoot ray from atomA to atomB
-    // const centerA = atomA.cube;
-    // const centerB = atomB.cube.position;
-    // const directionAtoB = centerB.sub(centerA).normalized();
-
-    console.log("analyzeAtomCollision");
-    console.log(atomA.cube);
-
+/*
+ * return true if atoms' normals of the same color are intersecting
+ */
+function areMatchingNormalsColliding(atomA, atomB) {
     let aNormalBB;
     let bNormalBB;
 
@@ -426,10 +421,69 @@ function analyzeAtomCollision(atomA, atomB) {
 
         // if two normals of the same color intersect, merge molecules
         if (aNormalBB.intersectsBox(bNormalBB)) {
-            // TODO merge
-            console.log("MERGE!");
+            return true;
         }
     }
+    return false;
+}
+
+// function castRayNormalToFace()
+
+
+function analyzeAtomCollision(atomA, atomB) {
+
+    if (atomA.normals.length != NUM_SIDES || atomB.normals.length != NUM_SIDES)
+        throw new Error("Normals length not equal to number of cube sides.");
+    // shoot ray from atomA to atomB
+    // const centerA = atomA.cube;
+    // const centerB = atomB.cube.position;
+    // const directionAtoB = centerB.sub(centerA).normalized();
+
+    // console.log("analyzeAtomCollision");
+    // console.log(atomA.cube);
+
+    // are color matching normals colliding? TODO delete
+    // let merge = areMatchingNormalsColliding(atomA, atomB);
+    // console.log(`are normals colliding: ${merge}`);
+
+    // cube bounding boxes
+    const aCubeBB = new THREE.Box3().setFromObject(atomA.cube);
+    const bCubeBB = new THREE.Box3().setFromObject(atomB.cube);
+
+    let aNormalBB;
+    let bNormalBB;
+    let merge = false;
+    let intersectedObjs;
+
+    for (let i = 0; i < NUM_SIDES; i++) {
+        // normals are in ordered list so the same color matches at each index
+        aNormalBB = new THREE.Box3().setFromObject(atomA.normals[i]);
+        bNormalBB = new THREE.Box3().setFromObject(atomB.normals[i]);
+        // console.log(`a normal color: ${atomA.normals[i].material.color.getHex()}`);
+        // console.log(`b normal color: ${atomB.normals[i].material.color.getHex()}`);
+
+        // if two normals of the same color intersect, merge molecules
+        if (aNormalBB.intersectsBox(bNormalBB)) {
+            // console.log("MERGE");
+            merge = true;
+            return true;
+        }
+
+        // does either normal overlap with the Cube of the other ?
+        // if (aNormalBB.intersectsBox(bCubeBB)) {
+        //     intersectedObjs = raycaster.intersectObjects(atomB.object.children);
+
+        //     if (intersects.length > 0) {
+        //         const intersection = intersects[0];
+        //     }
+        // }
+
+        // if (bNormalBB.intersectsBox(aCubeBB)) {
+
+        // }
+
+    }
+    return false;
 
     // see what objects we intersect
 
@@ -487,14 +541,14 @@ function findCollisions() {
             comparisons.add(`${molA.id}_${molB.id}`);
             comparisons.add(`${molB.id}_${molA.id}`);
 
-            console.log(`comparing molecules ${molA.id}_${molB.id}`);
+            // console.log(`comparing molecules ${molA.id}_${molB.id}`);
 
             // if bounding boxes do not intersect, skip
             if (!molA.boundingBox.intersectsBox(molB.boundingBox)) {
                 continue;
             }
 
-            console.log(`${molA.id} intersects ${molB.id}`);
+            // console.log(`${molA.id} intersects ${molB.id}`);
 
             // now compare the atoms in the colliding molecules to see which overlap
             for (const atomA of molA.atoms) {
@@ -508,20 +562,21 @@ function findCollisions() {
                     comparisons.add(`${atomA.id}_${atomB.id}`);
                     comparisons.add(`${atomB.id}_${atomA.id}`);
 
-                    console.log(`comparing atoms ${atomA.id}_${atomB.id}`);
+                    // console.log(`comparing atoms ${atomA.id}_${atomB.id}`);
 
                     // if bounding boxes do not intersect, skip
                     if (!atomA.boundingBox.intersectsBox(atomB.boundingBox)) {
                         continue;
                     }
 
-                    console.log(`${atomA.id} intersects ${atomB.id}`);
-                    console.log(atomA.cube);
-                    analyzeAtomCollision(atomA, atomB);
+                    // console.log(`${atomA.id} intersects ${atomB.id}`);
+                    // console.log(atomA.cube);
+                    return analyzeAtomCollision(atomA, atomB);
                 }
             }
         }
     }
+    return false;
 }
 
 
@@ -609,9 +664,11 @@ function rendeLoop() {
 
     requestAnimationFrame(rendeLoop) //loop the render function
 
-    // for (const molecule of molecules) {
-    //     animate(molecule);
-    // }    
+    // if (!findCollisions()) {
+        for (const molecule of molecules) {
+            animate(molecule);
+        }   
+    // }
 }
 findCollisions();
 // const colors = defineColors()
