@@ -435,9 +435,10 @@ function analyzeAtomCollision(atomA, atomB) {
     if (atomA.normals.length != NUM_SIDES || atomB.normals.length != NUM_SIDES)
         throw new Error("Normals length not equal to number of cube sides.");
     // shoot ray from atomA to atomB
-    // const centerA = atomA.cube;
-    // const centerB = atomB.cube.position;
+    const centerA = atomA.object.position;
+    const centerB = atomB.object.position;
     // const directionAtoB = centerB.sub(centerA).normalized();
+    // const direction
 
     // console.log("analyzeAtomCollision");
     // console.log(atomA.cube);
@@ -470,13 +471,20 @@ function analyzeAtomCollision(atomA, atomB) {
         }
 
         // does either normal overlap with the Cube of the other ?
-        // if (aNormalBB.intersectsBox(bCubeBB)) {
-        //     intersectedObjs = raycaster.intersectObjects(atomB.object.children);
+        if (aNormalBB.intersectsBox(bCubeBB)) {
+            // console.log(centerA.sub(atomA.normals[i].position).normalize());
+            // point along pointer of cubeA to check if there's a face intersection
+            raycaster.set(atomA.normals[i].position, centerA.sub(atomA.normals[i].position).normalize())
+            intersectedObjs = raycaster.intersectObjects(atomB.object.children);
 
-        //     if (intersects.length > 0) {
-        //         const intersection = intersects[0];
-        //     }
-        // }
+            // if (intersectedObjs.length > 0) {
+            //     const intersection = intersects[0];
+            // }
+            for (let j = 0; j < intersectedObjs.length; j++) {
+                // console.log(`aNormalBB ray intersects with ${intersectedObjs[j]}`);
+                return true;
+            }
+        }
 
         // if (bNormalBB.intersectsBox(aCubeBB)) {
 
@@ -664,12 +672,12 @@ function rendeLoop() {
 
     requestAnimationFrame(rendeLoop) //loop the render function
 
-    // if (!findCollisions()) {
+    if (!findCollisions()) {
         for (const molecule of molecules) {
             animate(molecule);
         }   
-    // }
+    }
 }
-findCollisions();
+// findCollisions();
 // const colors = defineColors()
 rendeLoop() //start rendering
