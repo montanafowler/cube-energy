@@ -321,7 +321,8 @@ for (let i = 0; i < NUM_CUBES; i++) {
 let mList = Array.from(molecules);
 mList[0].object.position.x = -3.0;
 mList[1].object.position.x = 3.0;
-mList[0].object.rotateZ(3.14159);
+// mList[0].object.rotateX(3.14159);
+mList[1].object.rotateZ(3.14159);
 
 
 // set up set of original molecule pairs
@@ -460,6 +461,7 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
 
     // this with the transformation matrix of the obj
     let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
+    // console.log(`POSNEGDIR ${posNegDir}`);
     let n = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
     // console.log(`n.x ${n.x}->`)
     n.applyMatrix3(normalAtom.object.matrixWorld).normalize();
@@ -583,8 +585,8 @@ function analyzeAtomCollision(atomA, atomB) {
 
     for (let i = 0; i < NUM_SIDES; i++) {
 
-        if (i != 1)
-            continue;
+        // if (i != 1)
+        //     continue;
 
         // normals are in ordered list so the same color matches at each index
         aNormalBB = new THREE.Box3().setFromObject(atomA.normals[i], true);
@@ -607,18 +609,18 @@ function analyzeAtomCollision(atomA, atomB) {
                 // merge = true;
                 console.log('a')
                 return true;
+            } else if (bNormalBB.intersectsBox(aCubeBB)) {
+                // console.log(`NORM[${i}]:${atomB.id} -> ${atomA.id}`);
+                if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
+                    // console.log(`${atomA.id}_${atomB.id} c`)
+                    // merge = true;
+                    console.log('b')
+                    return true;
+                }
             }
         }
 
-        if (bNormalBB.intersectsBox(aCubeBB)) {
-            // console.log(`NORM[${i}]:${atomB.id} -> ${atomA.id}`);
-            if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
-                // console.log(`${atomA.id}_${atomB.id} c`)
-                // merge = true;
-                console.log('b')
-                return true;
-            }
-        }
+        
 
         
 
@@ -814,7 +816,7 @@ function rendeLoop() {
 
     if (!STOP_CALCULATING) {
         if (!findCollisions() && positionInBounds(mList[0].object.position)) {
-            mList[0].object.translateX(-0.01);
+            mList[0].object.translateX(0.01);
             for (const molecule of molecules) {
                 // animate(molecule);
 
