@@ -32,7 +32,7 @@ const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 3;
+const BOUNDS = CUBE_SIZE * 4;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -44,18 +44,18 @@ let NUM_SIDES = 6;
 // COLORS: define random colors for the session
 function defineColors() {
     let colors = []
-    for(let i = 0; i < NUM_SIDES; i++) {
-        colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
-        colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
-    }
+    // for(let i = 0; i < NUM_SIDES; i++) {
+    //     colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
+    //     colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
+    // }
 
     // TEST COLORS, todo delete
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
-    // colors.push(new THREE.MeshLambertMaterial( {color: 'black'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'black'}));
 
     return colors;
 }
@@ -310,13 +310,23 @@ function randomCoord() {
 var molecules = new Set();
 let molecule;
 for (let i = 0; i < NUM_CUBES; i++) {
-    molecule = new Molecule(i);
+    molecule = new Molecule();
     molecules.add(molecule);
+
+    // todo delete
+    molecule.object.position.y = 0.0;
+    molecule.object.position.z = 0.0;
 
     // add the 3d obj to the scene graph
     scene.add(molecule.object);
 }
 
+
+// TEST COLLISIONS 
+let mList = Array.from(molecules);
+mList[0].object.position.x = -3.0;
+mList[1].object.position.x = 3.0;
+// mList[0].object.rotateZ(3.14159);
 
 
 // set up set of original molecule pairs
@@ -430,13 +440,18 @@ function areMatchingNormalsColliding(atomA, atomB) {
 /*
  * return true if normal hits correct face of other atom
  */
-function doesNormalHitCorrectCubeFace(normal, normalAtom, cubeAtom) {
+function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom) {
     // shoot ray along normal from normalAtom center in world coord
-    const normalAtomCenter = normalAtom.object.position;
-    const worldNormalDir = normal.position.sub(normalAtomCenter).normalize()
+    const normalAtomCenter = normalAtom.object.getWorldPosition();
+    const worldNormalDir = normal.getWorldPosition().sub(normalAtomCenter).normalize();
+    console.log(`normalAtomCenter ${normalAtomCenter.x}`);
+    // console.log(`normalAtom ${normalAtom.object.position.x}`);
+    // console.log(`cubeAtom ${cubeAtom.object.position.x}`);
+    console.log(`worldNormalDir ${worldNormalDir}`);
     
     // point along pointer of cubeA to check if there's a face intersection
     let intersectedObjs = raycaster.intersectObjects([cubeAtom.cube]);
+    console.log(intersectedObjs);
 
     // if (intersectedObjs.length > 0) {
     //     const intersection = intersects[0];
@@ -447,18 +462,26 @@ function doesNormalHitCorrectCubeFace(normal, normalAtom, cubeAtom) {
         // console.log(`aNormalBB ray intersects with ${intersectedObjs[j]}`);
         const intersection = intersectedObjs[j];
 
-        const colorAttribute = intersection.object.geometry.getAttribute('color');
-        const face = intersection.face;
+        const colorAttribute = intersection.object;//.geometry.material.color;
+        const face = intersection.faceIndex;
+        console.log(typeof face);
+        console.log(face);
+        console.log()
+        // const colorAttribute = cubeAtom.cube.geometry.getAttribute( 'color' );
 
         const color = new THREE.Color(Math.random() * 0xff0000);
 
+        console.log(`a normal color: ${normal.material.color.getHex()}`);
+        console.log(colorAttribute);
+        // console.log(`face color: ${face.material.color.getHex()}`);
         // colorAttribute.setXYZ(face.a, color.r, color.g, color.b);
         // colorAttribute.setXYZ(face.b, color.r, color.g, color.b);
         // colorAttribute.setXYZ(face.c, color.r, color.g, color.b);
 
         // colorAttribute.needsUpdate = true;
         // console.log("RETURN TRUE");
-        return true;
+        // return normal.material.color.getHex() == face.material.color.getHex();
+        return face == normalIndex;
     }
     // console.log("RETURN FALSE");
     return false;
@@ -503,24 +526,28 @@ function analyzeAtomCollision(atomA, atomB) {
         // if two normals of the same color intersect, merge molecules
         if (aNormalBB.intersectsBox(bNormalBB)) {
             // console.log(`${atomA.id}_${atomB.id} a`);
-            merge = true;
+            // merge = true;
             // return true; 
         }
 
         // does either normal overlap with the Cube of the other ?
         if (aNormalBB.intersectsBox(bCubeBB)) {
             // console.log("a->b");
-            if (doesNormalHitCorrectCubeFace(atomA.normals[i], atomA, atomB)) {
+            if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
                 // console.log(`${atomA.id}_${atomB.id} b`)
-                merge = true;
+                // merge = true;
+                console.log('a')
+                return true;
             }
         }
 
         if (bNormalBB.intersectsBox(aCubeBB)) {
             // console.log("a->b");
-            if (doesNormalHitCorrectCubeFace(atomB.normals[i], atomB, atomA)) {
+            if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
                 // console.log(`${atomA.id}_${atomB.id} c`)
-                merge = true;
+                // merge = true;
+                console.log('b')
+                return true;
             }
         }
 
@@ -717,12 +744,14 @@ function rendeLoop() {
     requestAnimationFrame(rendeLoop) //loop the render function
 
     if (!STOP_CALCULATING) {
-        if (!findCollisions()) {
+        if (!findCollisions() && positionInBounds(mList[0].object.position)) {
+            mList[0].object.translateX(0.01);
             for (const molecule of molecules) {
-                animate(molecule);
+                // animate(molecule);
+
             }   
         } else {
-            // STOP_CALCULATING = true;
+            STOP_CALCULATING = true;
         }
     }
     
