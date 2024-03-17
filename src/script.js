@@ -321,7 +321,7 @@ for (let i = 0; i < NUM_CUBES; i++) {
 let mList = Array.from(molecules);
 mList[0].object.position.x = -3.0;
 mList[1].object.position.x = 3.0;
-mList[1].object.rotateZ(3.14159);
+mList[0].object.rotateZ(3.14159);
 
 
 // set up set of original molecule pairs
@@ -445,12 +445,13 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
     // console.log(typeof normal);
     normalPos = normal.getWorldPosition(normalPos);
     console.log(`1normalPos ${normalPos.x}`);
-    normalPos = normalPos.applyMatrix4(normalAtom.object.matrixWorld);
-    console.log(`2normalPos ${normalPos.x}`);
+    // normalPos = normalPos.applyMatrix4(normalAtom.object.matrixWorld);
+    // console.log(`2normalPos ${normalPos.x}`);
+    const endPoint = normalAtom.object.add()
 
     const worldNormalDir = normalPos.sub(normalAtomCenter).normalize();
-    // console.log(`normalAtomCenter ${normalAtomCenter.x}`);
-    // console.log(`worldNormalDir ${worldNormalDir.x}`);
+    console.log(`normalAtomCenter ${normalAtomCenter.x}`);
+    console.log(`worldNormalDir ${worldNormalDir.x}`);
 
     // STOP_CALCULATING = true;
     // console.log(`normalAtom ${normalAtom.object.position.x}`);
@@ -528,7 +529,7 @@ function analyzeAtomCollision(atomA, atomB) {
 
     for (let i = 0; i < NUM_SIDES; i++) {
 
-        if (i != 0)
+        if (i != 1)
             continue;
 
         // normals are in ordered list so the same color matches at each index
@@ -759,7 +760,7 @@ function rendeLoop() {
 
     if (!STOP_CALCULATING) {
         if (!findCollisions() && positionInBounds(mList[0].object.position)) {
-            mList[0].object.translateX(0.01);
+            mList[0].object.translateX(-0.01);
             for (const molecule of molecules) {
                 // animate(molecule);
 
