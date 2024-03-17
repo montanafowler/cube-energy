@@ -436,22 +436,62 @@ function areMatchingNormalsColliding(atomA, atomB) {
  * return true if normal hits correct face of other atom
  */
 function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom) {
-    let normalAtomCenter = new THREE.Vector3();
+    console.log(`atom ${normalAtom.id}->${cubeAtom.id}`);
+    let normalAtomWorldPos = new THREE.Vector3();
     let normalPos = new THREE.Vector3();
 
     // shoot ray along normal from normalAtom center in world coord
-    normalAtomCenter = normalAtom.object.getWorldPosition(normalAtomCenter);
-    // console.log(`normal.position ${normal.position.x}`);
-    // console.log(typeof normal);
-    normalPos = normal.getWorldPosition(normalPos);
-    console.log(`1normalPos ${normalPos.x}`);
+    normalAtomWorldPos = normalAtom.object.getWorldPosition(normalAtomWorldPos);
+    // let atomWorldPosMat = normalAtom.object.position.applyMatrix4(normalAtom.object.matrixWorld);
+    
+    // console.log(`normalAtom local pos ${normalAtom.cube.position.x}`);
+    // console.log(`normalAtom world pos ${normalAtomWorldPos.x}`);
+    // console.log(`normalAtom world mat ${atomWorldPosMat.x}`);
+
+    // this with the transformation matrix of the obj
+    let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
+    let n = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
+    console.log(`n.x ${n.x}->`)
+    n.applyMatrix3(normalAtom.object.matrixWorld).normalize();
+    console.log(`n.x ${n.x}`)
+
+
+    // var normalMatrix = new THREE.Matrix3(); // create once and reuse
+    // var worldNormal = new THREE.Vector3(); // create once and reuse
+    // normalPos = normal.getWorldPosition(normalPos);
+    // let norm = new THREE.Vector3();
+    // normalMatrix.getNormalMatrix(normalAtom.object.matrixWorld);
+    // worldNormal.copy(normalPos).applyMatrix3(normalMatrix).normalize();
+
+    // console.log(`worldNormal ${worldNormal.x}`);
+    // console.log(`normal obj world pos get world pos ${normalPos.x}`);
+    // console.log(`normal obj world pos localToWorld ${nLocal2World.x}`);
+    // console.log(`normal obj world pos mat ${nMat.x}`);
+    // console.log(`normal obj world add ${nMove.x}`);
+
+    // normalPos = normal.getWorldPosition(normalPos);
+    // let nLocal2World = normalAtom.object.localToWorld(normalPos);
+    // let nMat = normalPos.applyMatrix3(normalAtom.object.matrixWorld).normalize();
+    // let nMove = normalAtomWorldPos.add(nMat);
+    
+    // console.log(`normal obj local pos ${normal.position.x}`);
+    // console.log(`normal obj world pos get world pos ${normalPos.x}`);
+    // console.log(`normal obj world pos localToWorld ${nLocal2World.x}`);
+    // console.log(`normal obj world pos mat ${nMat.x}`);
+    // console.log(`normal obj world add ${nMove.x}`);
+
+
+
+
+    // console.log(`1normalPos ${normalPos.x}`);
     // normalPos = normalPos.applyMatrix4(normalAtom.object.matrixWorld);
     // console.log(`2normalPos ${normalPos.x}`);
-    const endPoint = normalAtom.object.add()
+    // const endPoint = normalAtom.object.position.add(normal.position).applyMatrix4(normalAtom.object.matrixWorld);
 
-    const worldNormalDir = normalPos.sub(normalAtomCenter).normalize();
-    console.log(`normalAtomCenter ${normalAtomCenter.x}`);
-    console.log(`worldNormalDir ${worldNormalDir.x}`);
+    // const worldNormalDir = nMove.sub(normalAtomWorldPos).normalize();
+    // const worldNormalDir = normalPos.sub(normalAtomCenter).normalize();
+    // console.log(`normalAtomCenter ${normalAtomCenter.x}`);
+    // console.log(`worldNormalDir ${worldNormalDir.x}, ${worldNormalDir.y}, ${worldNormalDir.z}`);
 
     // STOP_CALCULATING = true;
     // console.log(`normalAtom ${normalAtom.object.position.x}`);
@@ -459,7 +499,7 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
     // console.log(`worldNormalDir ${worldNormalDir}`);
     
     // point along pointer of cubeA to check if there's a face intersection
-    let raycaster = new THREE.Raycaster(normalAtomCenter, worldNormalDir, 0.1, CUBE_SIZE*2.0);
+    let raycaster = new THREE.Raycaster(normalAtomWorldPos, n, 0.1, CUBE_SIZE*2.0);
     let intersectedObjs = raycaster.intersectObjects([cubeAtom.cube]);
     // console.log(intersectedObjs);
 
@@ -479,7 +519,7 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
         // console.log()
         // const colorAttribute = cubeAtom.cube.geometry.getAttribute( 'color' );
 
-        const color = new THREE.Color(Math.random() * 0xff0000);
+        // const color = new THREE.Color(Math.random() * 0xff0000);
 
         // console.log(`a normal color: ${normal.material.color.getHex()}`);
         // console.log(colorAttribute);
@@ -491,7 +531,7 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
         // colorAttribute.needsUpdate = true;
         // console.log("RETURN TRUE");
         // return normal.material.color.getHex() == face.material.color.getHex();
-        STOP_CALCULATING = true;
+        // STOP_CALCULATING = true;
         return face == normalIndex;
     }
     // console.log("RETURN FALSE");
@@ -547,7 +587,7 @@ function analyzeAtomCollision(atomA, atomB) {
 
         // does either normal overlap with the Cube of the other ?
         if (aNormalBB.intersectsBox(bCubeBB)) {
-            console.log(`NORM[${i}]:${atomA.id} -> ${atomB.id}`);
+            // console.log(`NORM[${i}]:${atomA.id} -> ${atomB.id}`);
             if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
                 // console.log(`${atomA.id}_${atomB.id} b`)
                 // merge = true;
@@ -557,7 +597,7 @@ function analyzeAtomCollision(atomA, atomB) {
         }
 
         if (bNormalBB.intersectsBox(aCubeBB)) {
-            console.log(`NORM[${i}]:${atomB.id} -> ${atomA.id}`);
+            // console.log(`NORM[${i}]:${atomB.id} -> ${atomA.id}`);
             if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
                 // console.log(`${atomA.id}_${atomB.id} c`)
                 // merge = true;
