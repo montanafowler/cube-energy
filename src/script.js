@@ -433,10 +433,20 @@ function areMatchingNormalsColliding(atomA, atomB) {
 }
 
 /*
+ * check if vectors are equal with epsilon +- 0.01
+ */
+function areVectorsEqual(v1, v2) {
+    let epsilon = 0.01
+    return ((Math.abs(v2.x - v1.x) < epsilon) 
+        && (Math.abs(v2.y - v1.y) < epsilon) 
+        && (Math.abs(v2.z - v1.z) < epsilon));
+}
+
+/*
  * return true if normal hits correct face of other atom
  */
 function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom) {
-    console.log(`atom ${normalAtom.id}->${cubeAtom.id}`);
+    // console.log(`atom ${normalAtom.id}->${cubeAtom.id}`);
     let normalAtomWorldPos = new THREE.Vector3();
     let normalPos = new THREE.Vector3();
 
@@ -451,9 +461,9 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
     // this with the transformation matrix of the obj
     let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
     let n = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
-    console.log(`n.x ${n.x}->`)
+    // console.log(`n.x ${n.x}->`)
     n.applyMatrix3(normalAtom.object.matrixWorld).normalize();
-    console.log(`n.x ${n.x}`)
+    // console.log(`n.x ${n.x}`)
 
 
     // var normalMatrix = new THREE.Matrix3(); // create once and reuse
@@ -513,9 +523,12 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
         const intersection = intersectedObjs[j];
 
         const colorAttribute = intersection.object;//.geometry.material.color;
-        const face = intersection.faceIndex;
+        const face = intersection.face;
+        const faceID = intersection.faceID;
+        const faceNormal = face.normal;
         // console.log(typeof face);
-        console.log(`FACE: ${face}, NORMAL: ${normalIndex}`);
+        let n5 = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
+        console.log(`FACE: ${faceID}, NORMAL: ${normalIndex}, Face.normal ${faceNormal.x}, n5.x ${n5.x}`);
         // console.log()
         // const colorAttribute = cubeAtom.cube.geometry.getAttribute( 'color' );
 
@@ -532,7 +545,8 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
         // console.log("RETURN TRUE");
         // return normal.material.color.getHex() == face.material.color.getHex();
         // STOP_CALCULATING = true;
-        return face == normalIndex;
+        // return faceNormal.x <= normalIndex;
+        return areVectorsEqual(face.normal, n5);
     }
     // console.log("RETURN FALSE");
     return false;
