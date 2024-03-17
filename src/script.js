@@ -26,13 +26,13 @@ import { OBB } from 'three/examples/jsm/math/OBB.js'
 // either floating (when clicking in empty space) or merged into the molecule (when clicking on a compatible face).
 
 // NUMBER OF CUBES
-const NUM_CUBES = 2;
+const NUM_CUBES = 10;
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 4;
+const BOUNDS = CUBE_SIZE * 10;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -308,9 +308,9 @@ for (let i = 0; i < NUM_CUBES; i++) {
     molecule = new Molecule();
     molecules.add(molecule);
 
-    // todo delete
-    molecule.object.position.y = 0.0;
-    molecule.object.position.z = 0.0;
+    // TODO delete
+    // molecule.object.position.y = 0.0;
+    // molecule.object.position.z = 0.0;
 
     // add the 3d obj to the scene graph
     scene.add(molecule.object);
@@ -318,11 +318,11 @@ for (let i = 0; i < NUM_CUBES; i++) {
 
 
 // TEST COLLISIONS 
-let mList = Array.from(molecules);
-mList[0].object.position.x = -3.0;
-mList[1].object.position.x = 3.0;
+// let mList = Array.from(molecules);
+// mList[0].object.position.x = -3.0;
+// mList[1].object.position.x = 3.0;
 // mList[0].object.rotateX(3.14159);
-mList[1].object.rotateZ(3.14159);
+// mList[1].object.rotateZ(3.14159);
 
 
 // set up set of original molecule pairs
@@ -447,132 +447,39 @@ function areVectorsEqual(v1, v2) {
  * return true if normal hits correct face of other atom
  */
 function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom) {
-    // console.log(`atom ${normalAtom.id}->${cubeAtom.id}`);
     let normalAtomWorldPos = new THREE.Vector3();
     let normalPos = new THREE.Vector3();
 
     // shoot ray along normal from normalAtom center in world coord
     normalAtomWorldPos = normalAtom.object.getWorldPosition(normalAtomWorldPos);
-    // let atomWorldPosMat = normalAtom.object.position.applyMatrix4(normalAtom.object.matrixWorld);
-    
-    // console.log(`normalAtom local pos ${normalAtom.cube.position.x}`);
-    // console.log(`normalAtom world pos ${normalAtomWorldPos.x}`);
-    // console.log(`normalAtom world mat ${atomWorldPosMat.x}`);
 
-    // this with the transformation matrix of the obj
+    // transform the normal we are checking into the atom's transformation
     let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
-    // console.log(`POSNEGDIR ${posNegDir}`);
-    let n = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
-    // console.log(`n.x ${n.x}->`)
-    n.applyMatrix3(normalAtom.object.matrixWorld).normalize();
-    // console.log(`n.x ${n.x}`)
+    let normalLocal = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
+    let normalWorld = new THREE.Vector3();
+    normalWorld.copy(normalLocal);
+    normalWorld.applyMatrix3(normalAtom.object.matrixWorld).normalize();
 
-
-    // var normalMatrix = new THREE.Matrix3(); // create once and reuse
-    // var worldNormal = new THREE.Vector3(); // create once and reuse
-    // normalPos = normal.getWorldPosition(normalPos);
-    // let norm = new THREE.Vector3();
-    // normalMatrix.getNormalMatrix(normalAtom.object.matrixWorld);
-    // worldNormal.copy(normalPos).applyMatrix3(normalMatrix).normalize();
-
-    // console.log(`worldNormal ${worldNormal.x}`);
-    // console.log(`normal obj world pos get world pos ${normalPos.x}`);
-    // console.log(`normal obj world pos localToWorld ${nLocal2World.x}`);
-    // console.log(`normal obj world pos mat ${nMat.x}`);
-    // console.log(`normal obj world add ${nMove.x}`);
-
-    // normalPos = normal.getWorldPosition(normalPos);
-    // let nLocal2World = normalAtom.object.localToWorld(normalPos);
-    // let nMat = normalPos.applyMatrix3(normalAtom.object.matrixWorld).normalize();
-    // let nMove = normalAtomWorldPos.add(nMat);
-    
-    // console.log(`normal obj local pos ${normal.position.x}`);
-    // console.log(`normal obj world pos get world pos ${normalPos.x}`);
-    // console.log(`normal obj world pos localToWorld ${nLocal2World.x}`);
-    // console.log(`normal obj world pos mat ${nMat.x}`);
-    // console.log(`normal obj world add ${nMove.x}`);
-
-
-
-
-    // console.log(`1normalPos ${normalPos.x}`);
-    // normalPos = normalPos.applyMatrix4(normalAtom.object.matrixWorld);
-    // console.log(`2normalPos ${normalPos.x}`);
-    // const endPoint = normalAtom.object.position.add(normal.position).applyMatrix4(normalAtom.object.matrixWorld);
-
-    // const worldNormalDir = nMove.sub(normalAtomWorldPos).normalize();
-    // const worldNormalDir = normalPos.sub(normalAtomCenter).normalize();
-    // console.log(`normalAtomCenter ${normalAtomCenter.x}`);
-    // console.log(`worldNormalDir ${worldNormalDir.x}, ${worldNormalDir.y}, ${worldNormalDir.z}`);
-
-    // STOP_CALCULATING = true;
-    // console.log(`normalAtom ${normalAtom.object.position.x}`);
-    // console.log(`cubeAtom ${cubeAtom.object.position.x}`);
-    // console.log(`worldNormalDir ${worldNormalDir}`);
-    
     // point along pointer of cubeA to check if there's a face intersection
-    let raycaster = new THREE.Raycaster(normalAtomWorldPos, n, 0.1, CUBE_SIZE*2.0);
+    let raycaster = new THREE.Raycaster(normalAtomWorldPos, normalWorld, 0.1, CUBE_SIZE*2.0);
     let intersectedObjs = raycaster.intersectObjects([cubeAtom.cube]);
-    // console.log(intersectedObjs);
-
-    // if (intersectedObjs.length > 0) {
-    //     const intersection = intersects[0];
-    // }
+   
     for (let j = 0; j < intersectedObjs.length; j++) {
-        // console.log(`aNormalBB ray intersects with ${intersectedObjs[j]}`);
-        
-        // console.log(`aNormalBB ray intersects with ${intersectedObjs[j]}`);
-        const intersection = intersectedObjs[j];
-
-        const colorAttribute = intersection.object;//.geometry.material.color;
-        const face = intersection.face;
-        const faceID = intersection.faceID;
-        const faceNormal = face.normal;
-        // console.log(typeof face);
-        let n5 = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
-        console.log(`FACE: ${faceID}, NORMAL: ${normalIndex}, Face.normal ${faceNormal.x}, n5.x ${n5.x}`);
-        // console.log()
-        // const colorAttribute = cubeAtom.cube.geometry.getAttribute( 'color' );
-
-        // const color = new THREE.Color(Math.random() * 0xff0000);
-
-        // console.log(`a normal color: ${normal.material.color.getHex()}`);
-        // console.log(colorAttribute);
-        // console.log(`face color: ${face.material.color.getHex()}`);
-        // colorAttribute.setXYZ(face.a, color.r, color.g, color.b);
-        // colorAttribute.setXYZ(face.b, color.r, color.g, color.b);
-        // colorAttribute.setXYZ(face.c, color.r, color.g, color.b);
-
-        // colorAttribute.needsUpdate = true;
-        // console.log("RETURN TRUE");
-        // return normal.material.color.getHex() == face.material.color.getHex();
-        // STOP_CALCULATING = true;
-        // return faceNormal.x <= normalIndex;
-        return areVectorsEqual(face.normal, n5);
+        // if the face we hit first's local normal matches our local normal
+        // then our normal hit a face of the same color
+        return areVectorsEqual(intersectedObjs[j].face.normal, normalLocal);
     }
-    // console.log("RETURN FALSE");
+
     return false;
 }
 
-// function castRayNormalToFace()
-
-
+/*
+ * return true if two atoms collide and will need to merge
+ */
 function analyzeAtomCollision(atomA, atomB) {
 
     if (atomA.normals.length != NUM_SIDES || atomB.normals.length != NUM_SIDES)
         throw new Error("Normals length not equal to number of cube sides.");
-    // shoot ray from atomA to atomB
-    const centerA = atomA.object.position;
-    const centerB = atomB.object.position;
-    // const directionAtoB = centerB.sub(centerA).normalized();
-    // const direction
-
-    // console.log("analyzeAtomCollision");
-    // console.log(atomA.cube);
-
-    // are color matching normals colliding? TODO delete
-    // let merge = areMatchingNormalsColliding(atomA, atomB);
-    // console.log(`are normals colliding: ${merge}`);
 
     // cube bounding boxes
     const aCubeBB = new THREE.Box3().setFromObject(atomA.cube, true);
@@ -580,94 +487,32 @@ function analyzeAtomCollision(atomA, atomB) {
 
     let aNormalBB;
     let bNormalBB;
-    let merge = false;
     let intersectedObjs;
 
     for (let i = 0; i < NUM_SIDES; i++) {
-
-        // if (i != 1)
-        //     continue;
-
-        // normals are in ordered list so the same color matches at each index
+        // bounding boxes for the normal objects
         aNormalBB = new THREE.Box3().setFromObject(atomA.normals[i], true);
         bNormalBB = new THREE.Box3().setFromObject(atomB.normals[i], true);
-        // console.log(`a normal color: ${atomA.normals[i].material.color.getHex()}`);
-        // console.log(`b normal color: ${atomB.normals[i].material.color.getHex()}`);
 
         // if two normals of the same color intersect, merge molecules
         if (aNormalBB.intersectsBox(bNormalBB)) {
-            // console.log(`${atomA.id}_${atomB.id} a`);
-            // merge = true;
-            // return true; 
+            return true; 
         }
 
         // does either normal overlap with the Cube of the other ?
         if (aNormalBB.intersectsBox(bCubeBB)) {
-            // console.log(`NORM[${i}]:${atomA.id} -> ${atomB.id}`);
+            // 
             if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
-                // console.log(`${atomA.id}_${atomB.id} b`)
-                // merge = true;
-                console.log('a')
                 return true;
-            } else if (bNormalBB.intersectsBox(aCubeBB)) {
-                // console.log(`NORM[${i}]:${atomB.id} -> ${atomA.id}`);
-                if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
-                    // console.log(`${atomA.id}_${atomB.id} c`)
-                    // merge = true;
-                    console.log('b')
-                    return true;
-                }
+            } 
+        // TODO test!
+        } else if (bNormalBB.intersectsBox(aCubeBB)) {
+            if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
+                return true;
             }
         }
-
-        
-
-        
-
     }
-
-    // if (!merge) {
-
-    //     merge = aCubeBB.intersectsBox(bCubeBB);
-    //     if (merge)
-    //         console.log(`${atomA.id}_${atomB.id} d`)
-    // }
-    return merge;
-
-    // see what objects we intersect
-
-// .intersectsTriangle ( triangle : Triangle ) : Boolean
-// triangle - Triangle to check for intersection against.
-
-// Determines whether or not this box intersects triangle.
-
-    // cube bounding boxes
-    // const aCubeBB = new THREE.Box3().setFromObject(atomA.getCube());
-    // const bCubeBB = new THREE.Box3().setFromObject(atomA.getCube());
-
-  //   event.preventDefault();
-
-  // mouse.x = (event.clientX / renderer.domElement.offsetWidth) * 2 - 1;
-  // mouse.y = -(event.clientY / renderer.domElement.offsetHeight) * 2 + 1;
-
-  // caster.setFromCamera(mouse, camera);
-
-  // const intersects = caster.intersectObjects(scene.children);
-
-  // if (intersects.length > 0) {
-
-  //   const intersection = intersects[0];
-
-  //   const colorAttribute = intersection.object.geometry.getAttribute('color');
-  //   const face = intersection.face;
-
-  //   const color = new THREE.Color(Math.random() * 0xff0000);
-
-  //   colorAttribute.setXYZ(face.a, color.r, color.g, color.b);
-  //   colorAttribute.setXYZ(face.b, color.r, color.g, color.b);
-  //   colorAttribute.setXYZ(face.c, color.r, color.g, color.b);
-
-  //   colorAttribute.needsUpdate = true;
+    return false;
 }
 
 
@@ -718,8 +563,6 @@ function findCollisions() {
                         continue;
                     }
 
-                    // console.log(`${atomA.id} intersects ${atomB.id}`);
-                    // console.log(atomA.cube);
                     return analyzeAtomCollision(atomA, atomB);
                 }
             }
@@ -728,26 +571,11 @@ function findCollisions() {
     return false;
 }
 
-
-
-
-
-
-
-    //                      case 3: actually one of our OOBs cubes/normals does not intersect, reject collision
-    //                      case 4: we did find an intersection between a cube & normal
-    //                          make the normal the parent molecule (easier to become collinear w/ normal)
-    //                      case 5: we found intersection between 2 normals
-    //                          make them collinear to one of them
-    //                      case 6: we found an intersection between two
-
-
 //loop through atoms of molecule w/ fewer children to check OOBs? if none intersect, reject overlap
 
-//          see what I hit for molecule A on this ray        
-// loop through each face / normal to see if they intersect...
-//                how do I do this?
-
+/*
+ * build the normal to reflect around when we hit the bounding volume
+*/
 function positionInBounds(position) {
     let negBounds = - BOUNDS / 2.0;
     let posBounds = BOUNDS / 2.0;
@@ -815,11 +643,10 @@ function rendeLoop() {
     requestAnimationFrame(rendeLoop) //loop the render function
 
     if (!STOP_CALCULATING) {
-        if (!findCollisions() && positionInBounds(mList[0].object.position)) {
-            mList[0].object.translateX(0.01);
+        if (!findCollisions()) {// && positionInBounds(mList[0].object.position)) {
+            // mList[0].object.translateX(0.01);
             for (const molecule of molecules) {
-                // animate(molecule);
-
+                animate(molecule);
             }   
         } else {
             STOP_CALCULATING = true;
