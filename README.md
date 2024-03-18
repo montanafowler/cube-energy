@@ -28,6 +28,8 @@ npm run dev
 
 There is a TESTING flag you can change in script.js to get two simple cubes where one slowly translates towards the other in +X direction. I used this for testing the collision detection and merging.
 
+![testing](https://raw.githubusercontent.com/montanafowler/cube-energy/main/testing-image.png)
+
 ## Resources
 
 I set up the project using this boilerplate: https://github.com/ektogamat/threejs-andy-boilerplate/tree/main?tab=readme-ov-file
