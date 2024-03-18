@@ -37,9 +37,9 @@ so that I could follow this tutorial to get it hosted a link as easily as possib
 
 ## Design
 
-I designed my Atoms to hold the normals and the cube parented to a 3DObject, but not each other so I could check collisions with the Cube geometry without it taking into accound the normals as children in the bounding box.
+I designed my Atoms to hold the normals and the cube. The normals and cube meshes are parented to a 3DObject. The normal meshes are not parented to the cube mesh in order to be able to check collisions with the Cube geometry without the normals being included.
 
-Molecules all have a set of atoms they can loop through for collision detection, and if moleculeA absorbs moleculeB, moleculeB is parented to the moleculeA's 3D object to keep the transformation of moleculeB's atoms.  Then the atoms of moleculeB are added to the moleculeA's, and moleculeB is removed from the global molecule set for collision detection.
+Molecules all have a set of atoms they can loop through for collision detection, and if moleculeA absorbs moleculeB, moleculeB is parented to moleculeA's 3D object to keep the transformation of moleculeB's atoms.  Then the atoms of moleculeB are added to the moleculeA's, and moleculeB is removed from the global molecule set for collision detection.
 
 The collision detection goes through several checks before deciding to merge molecules:
 ```
