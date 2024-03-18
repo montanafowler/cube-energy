@@ -2,7 +2,7 @@
 
 ![cover](https://raw.githubusercontent.com/montanafowler/cube-energy/main/cover.png)
 
-To view: https://aqua-yovonnda-65.tiiny.site
+To view: [https://gold-dorisa-1.tiiny.site](https://gold-dorisa-1.tiiny.site)
 
 project code is in `src/script.js`
 
