@@ -55,7 +55,7 @@ function defineColors() {
     colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
     colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
     colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'black'}));
+    colors.push(new THREE.MeshLambertMaterial( {color: 'purple'}));
 
     return colors;
 }
