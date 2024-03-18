@@ -234,6 +234,14 @@ class Molecule {
             molecule.object.position.z = 0.0;
 
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
+
+            // direction to shift the normal along the axis for the face
+            let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
+            console.log(normalIndex);
+            console.log(FACE_AXES.length);
+            // build the normal
+            let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction);
+            console.log(`shiftPosition ${shiftPosition}`);
         }
     }
 
@@ -468,7 +476,8 @@ function doesNormalHitCorrectCubeFace(normal, normalIndex, normalAtom, cubeAtom)
 }
 
 /*
- * return true if two atoms collide and will need to merge
+ * return index of normal of intersection if two atoms collide and will need to merge
+ * return -1 if there's no valid intersection
  */
 function analyzeAtomCollision(atomA, atomB) {
 
@@ -492,7 +501,7 @@ function analyzeAtomCollision(atomA, atomB) {
         if (aNormalBB.intersectsBox(bNormalBB)) {
             // console.log(`normal intersection #${i}`);
             // atomA.absorbMolecule(atomB, i);
-            return true; 
+            return i; 
         }
 
         // does either normal overlap with the Cube of the other ?
@@ -501,18 +510,18 @@ function analyzeAtomCollision(atomA, atomB) {
             if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
                 // console.log(`A->B normal/face intersection #${i}`);
                 // atomA.absorbMolecule(atomB, i);
-                return true;
+                return i;
             } 
         } 
         // TODO test 
         if (bNormalBB.intersectsBox(aCubeBB)) {
             if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
                 // console.log(`B->A normal/face intersection #${i}`);
-                return true;
+                return i;
             }
         }
     }
-    return false;
+    return -1;
 }
 
 
@@ -526,7 +535,7 @@ function findCollisions() {
     }
 
     let comparisons = new Set();
-    let mergeMolecules = false;
+    let mergeMoleculeIndex = -1;
 
     for (const molA of molecules.values()) {
         for (const molB of molecules.values()) {
@@ -568,19 +577,16 @@ function findCollisions() {
                         continue;
                     }
 
-                    if (analyzeAtomCollision(atomA, atomB)) {
-                        mergeMolecules = true;
-                        break;
-                    }
+                    mergeMoleculeIndex = analyzeAtomCollision(atomA, atomB);
                 }
 
-                if (mergeMolecules)
+                if (mergeMoleculeIndex >= 0)
                     break;
             }
 
             // merge molecules
-            if (mergeMolecules) {
-                molA.absorbMolecule(molB);
+            if (mergeMoleculeIndex >= 0) {
+                molA.absorbMolecule(molB, mergeMoleculeIndex);
             }
         }
     }
