@@ -1,15 +1,13 @@
 /////////////////////////////////////////////////////////////////////////
 ///// IMPORT
 import './main.css'
-// import Atom from './cube.js'
-// import { getSize } from './cube.js'
 import * as THREE from 'three'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 
 // NUMBER OF CUBES
-const NUM_CUBES = 30;
+let NUM_CUBES = 30;
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
@@ -22,12 +20,14 @@ const STEP = 0.1;
 let NEXT_ID = 0;
 // sides of cube, don't change
 let NUM_SIDES = 6;
+// testing flag, use to test collisions between just two cubes
+let TESTING = false;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
 function defineColors() {
     let colors = []
-    // UNCOMMENT TO USE RANDOM COLORS
+    // UNCOMMENT TO USE RANDOM COLORS INSTEAD
     // for(let i = 0; i < NUM_SIDES; i++) {
     //     colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
     //     colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
@@ -46,7 +46,8 @@ function defineColors() {
 // all cubes use the same colors
 const COLORS = defineColors();
 
-// define the face axes in an array ordered with the colors
+///////////////////////////////////////////////////////////////////////
+// FACE AXES define the face axes in an array ordered with the colors
 function defineFaceAxes() {
     let faces = [];
     faces.push(new THREE.Vector3(1.0, 0.0, 0.0));
@@ -57,14 +58,17 @@ function defineFaceAxes() {
     faces.push(new THREE.Vector3(0.0, 0.0, 1.0));
     return faces;
 }
-
 const FACE_AXES = defineFaceAxes();
 
+
+///////////////////////////////////////////////////////////////////////
+// ATOM class definition, an atom is parented to a molecule
+// it has a list of normals and a cube parented to its THREE.Object3D object attribute 
 class Atom {
     #id;
     #object;
     #cube;
-    #normals; // TODO change to dictionary of normal ID <#id-x1, normal?>
+    #normals;
     #boundingBox;
 
     /*
@@ -94,8 +98,8 @@ class Atom {
     /**
      * construct the Atom with its normals at local coordinates 0,0,0
     */
-    constructor(uid) {
-        // unique id for atoms
+    constructor() {
+        // unique id for atom
         this.#id = NEXT_ID;
         NEXT_ID++;
 
@@ -108,7 +112,6 @@ class Atom {
 
         // make the cube mesh a child of the object
         this.#object.add(this.#cube);
-        // console.log(`created cube ${this.#id}, ${this.#cube}`)
 
         // define normals, one for each face
         this.#normals = []
@@ -155,10 +158,16 @@ class Molecule {
     #atoms;
     #rotationDirs;
 
+    /*
+     * randomly return +1.0 or -1.0
+    */
     static randPosNeg() {
         return Math.random() < 0.5 ? -1.0 : 1.0;
     }
 
+    /*
+     * construct a molecule with one atom at its origin.
+    */
     constructor() {
         // save molecule's unique id
         this.#id = NEXT_ID;
@@ -173,12 +182,10 @@ class Molecule {
         this.#object.position.z = randomCoord();
 
         // set the direction, a normalized random vector
-        this.#direction = new THREE.Vector3(Math.random()-0.5, 0.0, 0.0).normalize();//new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+        this.#direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
 
         // make each molecule randomly rotate + or - x, y, z
         this.#rotationDirs = new THREE.Vector3(Molecule.randPosNeg(), Molecule.randPosNeg(), Molecule.randPosNeg());
-        // console.log("rotation dirs");
-        // console.log(this.#rotationDirs);
 
         this.#atoms = new Set();
 
@@ -190,6 +197,7 @@ class Molecule {
         // parent an atom to the molecule
         this.addAtom(new Atom());
 
+        // update the bounding box of this molecule for collision detection pre-processing
         this.updateBoundingBox = function() {
             this.#boundingBox = new THREE.Box3().setFromObject(this.#object);
         }
@@ -204,7 +212,7 @@ class Molecule {
 
             // add atoms to list for collisions
             for (const atom of molecule.atoms) {
-                this.#atoms.add(atom);
+                this.#atoms.add(atom); //.union() wasn't working for me
             }
 
             // set molecule position
@@ -212,44 +220,22 @@ class Molecule {
             molecule.object.position.y = 0.0;
             molecule.object.position.z = 0.0;
 
-            //
-            // let oldRot = molecule.object.quaternion;
             // set to same orientation
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
 
-            // direction to shift the normal along the axis for the face
+            // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
-            // console.log(normalIndex);
-            // console.log(FACE_AXES.length);
             
-            // build the normal
+            // shift the new atom along locally along the normal
             let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction).normalize();
-            // console.log(`shiftPosition ${shiftPosition}`);
-            // let perpNormal = shiftPosition.x > 0.0 ? FACE_AXES[2] : FACE_AXES[0];
-            if (shiftPosition.x != 0.0) {
-                molecule.object.rotateY(Math.PI);
-            } else {
-                molecule.object.rotateX(Math.PI);
-            }
-            let newRot = molecule.object.quaternion;
-
-            molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
-
-
-            // molecule.object.setRotationFromAxisAngle();
             molecule.object.translateOnAxis(shiftPosition, CUBE_SIZE * 1.5);
 
+            // rotate around a perpendicular axis to keep the faces facing each other locally
             if (shiftPosition.x != 0.0) {
                 molecule.object.rotateY(Math.PI);
             } else {
                 molecule.object.rotateX(Math.PI);
             }
-
-            // molecule.object.applyQuaternion(newRot);
-
-            // molecule.object.rotateY(Math.PI);
-            // molecule.object.lookAt(new THREE.Vector3());
-            // molecule.object.setRotationFromQuaternion(oldRot.normalize());
         }
     }
 
@@ -338,135 +324,89 @@ function randomCoord() {
     return Math.random() * BOUNDS - BOUNDS / 2;
 }
 
+// global molecules set to use for collision detection
 var molecules = new Set();
-let molecule;
-for (let i = 0; i < NUM_CUBES; i++) {
-    molecule = new Molecule();
-    molecules.add(molecule);
 
-    // TODO delete
-    // molecule.object.position.y = 0.0;
-    // molecule.object.position.z = 0.0;
+function setupCubes() {
+    let molecule;
+    for (let i = 0; i < NUM_CUBES; i++) {
+        // create molecule, one cube per molecule
+        molecule = new Molecule();
+        molecules.add(molecule);
 
-    // add the 3d obj to the scene graph
-    scene.add(molecule.object);
+        // add the 3d obj to the scene graph
+        scene.add(molecule.object);
+    }
 }
 
-
-// TEST COLLISIONS 
-// let mList = Array.from(molecules);
-// mList[0].object.position.x = -3.0;
-// mList[1].object.position.x = 3.0;
-// mList[0].object.rotateZ(3.14159);
-// mList[1].object.rotateX(.5);
-// mList[1].object.rotateY(.2);
-
-function testCrossProduct() {
-
-
-
-
-    let normalIndex = 1;
-    let normalAtom = mList[0];
-    let normalAtomWorldPos = new THREE.Vector3();
-    // let normalAtomNormPos = new THREE.Vector3();
-    // shoot ray along normal from normalAtom center in world coord
-    normalAtomWorldPos = normalAtom.object.getWorldPosition(normalAtomWorldPos);
-    // transform the normal we are checking into the atom's transformation
-    let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
-    let normalLocal = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
-    let normalWorld = new THREE.Vector3();
-    normalWorld.copy(normalLocal);
-    normalWorld.applyMatrix3(normalAtom.object.matrixWorld).normalize();
-
-    let faceAtom = mList[1];
-    let faceAtomWorldPos = new THREE.Vector3();
-    // shoot ray along normal from normalAtom center in world coord
-    faceAtomWorldPos = faceAtom.object.getWorldPosition(faceAtomWorldPos);
-
-    let normalFaceWorld = new THREE.Vector3();
-    normalFaceWorld.copy(normalLocal);
-    normalFaceWorld.applyMatrix3(faceAtom.object.matrixWorld).normalize();
-
-    let crossProduct = new THREE.Vector3();
-    crossProduct.crossVectors(normalFaceWorld, normalWorld);
-
-    console.log(`normalFaceWorld ${normalFaceWorld.x}, ${normalFaceWorld.y}, ${normalFaceWorld.z}`);
-    console.log(`normalWorld ${normalWorld.x}, ${normalWorld.y}, ${normalWorld.z}`);
-    console.log(`crossProduct ${crossProduct.x}, ${crossProduct.y}, ${crossProduct.z}`);
-
-    let sineOfAngle = crossProduct.length;
-    let angle = Math.asin(sineOfAngle);
-    let axis = new THREE.Vector3();
-    axis.copy(crossProduct);
-    axis.divideScalar(sineOfAngle);
+/////////////////////////////////////////////////////////////////////////
+///// Testing Helper Functions
+let molTestList;
+function testTwoCubeSetup() {
     
-    let values = new THREE.Vector3();
-    values.copy(axis);
-    values.multiplyScalar(Math.sin(angle/2.0));
-    const quaternion = new THREE.Quaternion(values.x, values.y, values.z, Math.cos(angle/2.0));
-    // quaternion.setFromAxisAngle(axis.normalize(), angle);
-    // normalAtom.object.applyQuaternion(quaternion);
+    molecules = new Set();
+    NUM_CUBES = 2;
+    let molecule;
+    for (let i = 0; i < NUM_CUBES; i++) {
+        molecule = new Molecule();
+        molecules.add(molecule);
 
-    // normalAtom.object.applyQuaternion(quaternion);
-    // normalAtom.object.rotateOnWorldAxis(crossProduct.normalize(), 0.2);
+        molecule.object.position.y = 0.0;
+        molecule.object.position.z = 0.0;
 
-    normalAtom.object.up = new THREE.Vector3(0.0, 1.0, 1.0);
-    var la = new THREE.Vector3().addVectors(faceAtom.object.position, normalLocal);
-    // normalAtom.object.lookAt(la);
-    let angleBetweenNormals = normalFaceWorld.angleTo(-normalWorld);
-    console.log(`angleBetweenNormals ${angleBetweenNormals}`);
+        // add the 3d obj to the scene graph
+        scene.add(molecule.object);
+    }
 
+    // TEST COLLISIONS 
+    molTestList = Array.from(molecules);
+    molTestList[0].object.position.x = -3.0;
+    molTestList[1].object.position.x = 3.0;
+    molTestList[0].object.rotateZ(3.14159);
+    molTestList[1].object.rotateX(.5);
+    molTestList[1].object.rotateY(.2);
 
 }
-// mList[1].object.rotateY(.5);
 
-function testLookAt() {
-    
+function addBoundingVolumeCornersForTesting() {
+    // show bounds debugging
+    const geometry = new THREE.BoxGeometry(.5, .5, .5); 
+    const corner1 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
+    const corner2 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
+    const corner3 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
+    const corner4 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
+    corner1.translateOnAxis(new THREE.Vector3(1.0, 1.0, 1.0), BOUNDS / 2);
+    corner2.translateOnAxis(new THREE.Vector3(-1.0, 1.0, 1.0), BOUNDS / 2);
+    corner3.translateOnAxis(new THREE.Vector3(-1.0, 1.0, -1.0), BOUNDS / 2);
+    corner4.translateOnAxis(new THREE.Vector3(1.0, 1.0, -1.0), BOUNDS / 2);
+
+    const corner5 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
+    const corner6 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
+    const corner7 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
+    const corner8 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
+    corner5.translateOnAxis(new THREE.Vector3(1.0, -1.0, 1.0), BOUNDS / 2);
+    corner6.translateOnAxis(new THREE.Vector3(-1.0, -1.0, 1.0), BOUNDS / 2);
+    corner7.translateOnAxis(new THREE.Vector3(-1.0, -1.0, -1.0), BOUNDS / 2);
+    corner8.translateOnAxis(new THREE.Vector3(1.0, -1.0, -1.0), BOUNDS / 2);
+    scene.add(corner1);
+    scene.add(corner2);
+    scene.add(corner3);
+    scene.add(corner4);
+    scene.add(corner5);
+    scene.add(corner6);
+    scene.add(corner7);
+    scene.add(corner8);
 }
 
+function testingSimpleAnimation() {
+    if (molTestList.length < 2)
+        throw Error("Trying testing animation without setting up test cubes.")
 
-// set up set of original molecule pairs
-// TODO if useful later, for now do double for loop
-// let visited = new Set();
-// let pairs = new Set();
-// for (const molA of molecules.values()) {
-//     for (const molB of molecules.values()) {
-//         if !(visited.has(molA.id)) {
-//             pairs.add(`${molA.id}_${molB.id}`)
-//             visited.add(molA);
-//         }
-//     }
-// } 
+    if (!findCollisions() && positionInBounds(molTestList[0].object.position)) {
+        molTestList[0].object.translateX(-0.01);
+    }
+}
 
-
-// show bounds debugging
-const geometry = new THREE.BoxGeometry(.5, .5, .5); 
-const corner1 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
-const corner2 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
-const corner3 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
-const corner4 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
-corner1.translateOnAxis(new THREE.Vector3(1.0, 1.0, 1.0), BOUNDS / 2);
-corner2.translateOnAxis(new THREE.Vector3(-1.0, 1.0, 1.0), BOUNDS / 2);
-corner3.translateOnAxis(new THREE.Vector3(-1.0, 1.0, -1.0), BOUNDS / 2);
-corner4.translateOnAxis(new THREE.Vector3(1.0, 1.0, -1.0), BOUNDS / 2);
-
-const corner5 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'green'})); 
-const corner6 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'red'})); 
-const corner7 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'blue'})); 
-const corner8 = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({color: 'yellow'})); 
-corner5.translateOnAxis(new THREE.Vector3(1.0, -1.0, 1.0), BOUNDS / 2);
-corner6.translateOnAxis(new THREE.Vector3(-1.0, -1.0, 1.0), BOUNDS / 2);
-corner7.translateOnAxis(new THREE.Vector3(-1.0, -1.0, -1.0), BOUNDS / 2);
-corner8.translateOnAxis(new THREE.Vector3(1.0, -1.0, -1.0), BOUNDS / 2);
-scene.add(corner1);
-scene.add(corner2);
-scene.add(corner3);
-scene.add(corner4);
-scene.add(corner5);
-scene.add(corner6);
-scene.add(corner7);
-scene.add(corner8);
 
 /// molecule transformations test
 // var molecule = new THREE.Object3D();
@@ -643,16 +583,20 @@ function findCollisions() {
                     comparisons.add(`${atomA.id}_${atomB.id}`);
                     comparisons.add(`${atomB.id}_${atomA.id}`);
 
-                    // console.log(`comparing atoms ${atomA.id}_${atomB.id}`);
-
                     // if bounding boxes do not intersect, skip
                     if (!atomA.boundingBox.intersectsBox(atomB.boundingBox)) {
                         continue;
                     }
 
+                    // mergeMoleculeIndex will be the index of the face of collision if we find one
                     mergeMoleculeIndex = analyzeAtomCollision(atomA, atomB);
+
+                    // break loop since we want to merge molecules
+                    if (mergeMoleculeIndex >= 0)
+                        break;
                 }
 
+                // break loop since we want to merge molecules
                 if (mergeMoleculeIndex >= 0)
                     break;
             }
@@ -666,7 +610,6 @@ function findCollisions() {
     return false;
 }
 
-//loop through atoms of molecule w/ fewer children to check OOBs? if none intersect, reject overlap
 
 /*
  * build the normal to reflect around when we hit the bounding volume
@@ -678,6 +621,7 @@ function positionInBounds(position) {
          && position.y > negBounds && position.y < posBounds 
          && position.z > negBounds && position.z < posBounds)
 }
+
 
 /*
  * build the normal to reflect around when we hit the bounding volume
@@ -723,9 +667,6 @@ function animate(molecule) {
     }
 }
 
-let STOP_CALCULATING = false;
-let d = 0;
-
 /////////////////////////////////////////////////////////////////////////
 //// RENDER LOOP FUNCTION
 function rendeLoop() {
@@ -738,28 +679,23 @@ function rendeLoop() {
 
     requestAnimationFrame(rendeLoop) //loop the render function
 
-    let collisionsFound = findCollisions();
-    // console.log(collisionsFound);
-    if (!STOP_CALCULATING) {
-
-        if (!collisionsFound) {// && positionInBounds(mList[0].object.position)) {
-            // mList[0].object.translateX(-0.01);
+    if (TESTING)
+        testingSimpleAnimation();
+    else {
+        if (!findCollisions()) {
             for (const molecule of molecules) {
                 animate(molecule);
             }   
-        } else {
-           // STOP_CALCULATING = true;
         }
     }
-
-    // wait(1000);
-    if (d == 100) {
-        // testCrossProduct();
-        console.log("done");
-    }
-
-    d++;
+    
 }
-// findCollisions();
-// const colors = defineColors()
+
+// setup cubes
+if (!TESTING) {
+    setupCubes();
+} else {
+    addBoundingVolumeCornersForTesting();
+    testTwoCubeSetup();
+}
 rendeLoop() //start rendering
