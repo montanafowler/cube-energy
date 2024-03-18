@@ -26,13 +26,13 @@ import { OBB } from 'three/examples/jsm/math/OBB.js'
 // either floating (when clicking in empty space) or merged into the molecule (when clicking on a compatible face).
 
 // NUMBER OF CUBES
-const NUM_CUBES = 5;
+const NUM_CUBES = 2;
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 10;
+const BOUNDS = CUBE_SIZE * 5;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -189,7 +189,7 @@ class Molecule {
         this.#object.position.z = randomCoord();
 
         // set the direction, a normalized random vector
-        this.#direction = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+        this.#direction = new THREE.Vector3(Math.random()-0.5, 0.0, 0.0).normalize();//new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
 
         // make each molecule randomly rotate + or - x, y, z
         this.#rotationDirs = new THREE.Vector3(Molecule.randPosNeg(), Molecule.randPosNeg(), Molecule.randPosNeg());
@@ -227,7 +227,13 @@ class Molecule {
             // this.#atoms = this.#atoms.union(new Set(Array.from(molecule.atoms)));
             console.log(`NEW ATOMS SIZE for ${this.#id}: ${this.#atoms.size}`);
 
-            
+            // match rotation
+            // molecule.object.quaternion.copy(this.#object.quaternion);
+            molecule.object.position.x = 0.0;
+            molecule.object.position.y = 0.0;
+            molecule.object.position.z = 0.0;
+
+            molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
         }
     }
 
@@ -324,7 +330,7 @@ for (let i = 0; i < NUM_CUBES; i++) {
 
     // TODO delete
     molecule.object.position.y = 0.0;
-    // molecule.object.position.z = 0.0;
+    molecule.object.position.z = 0.0;
 
     // add the 3d obj to the scene graph
     scene.add(molecule.object);
@@ -333,8 +339,8 @@ for (let i = 0; i < NUM_CUBES; i++) {
 
 // TEST COLLISIONS 
 let mList = Array.from(molecules);
-// mList[0].object.position.x = -3.0;
-// mList[1].object.position.x = 3.0;
+mList[0].object.position.x = -3.0;
+mList[1].object.position.x = 3.0;
 // // mList[0].object.rotateX(3.14159);
 // mList[1].object.rotateZ(3.14159);
 
