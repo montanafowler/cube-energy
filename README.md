@@ -2,6 +2,8 @@
 
 To view, visit this link
 
+project code is in `src/script.js`
+
 ## Run Locally
 
 (from boilerplate tutorial linked below)

@@ -21,7 +21,7 @@ let NEXT_ID = 0;
 // sides of cube, don't change
 let NUM_SIDES = 6;
 // testing flag, use to test collisions between just two cubes
-let TESTING = false;
+let TESTING = true;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
