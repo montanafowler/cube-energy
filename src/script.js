@@ -378,32 +378,6 @@ scene.add(corner8);
 // scene.add(molecule);
 
 
-// pseudocode
-// each molecule has an OOB, this includes normals
-// cache which ones we have checked in dictionary, or just list of molecule pairs ? AB, BC, AC
-// for every molecule, check all others (for now... could do some sorting to help? objs could have IDs)
-//      if OBBs intersect
-//              if we haven't already checked Atom A et Atom B (could loop through pairs, so not double loop)
-    //              case 1: atom A and atom B don't intersect
-    //                  continue
-    //              case 2: atom A and atom B intersect
-    //                  which of our OOB's is intersecting with the intersections we found ?
-    //                  Are we actually intersecting with one of its normals or cube?
-    //                      do cubes intersect?
-    //                          if so, check faces
-    //                      list nAs, nBs (ids for normals?) or just ordered list still works?
-    //                          compare n0A to n0B ob (same color, so do they intersect?)
-    //                              if n0A intersects n0B
-    //                                  merge into one molecule! 
-    //                                  break loops
-    //                      does cubeA intersect normals B?
-    //                          
-    //                      does cubeB intersect normals A?
-    //
-
-// object.userData.obb.copy( object.geometry.userData.obb );
-// object.userData.obb.applyMatrix4( object.matrixWorld );
-
 // molecules could become dead, so i create the pairs once and if we visit dead molecules we remove them from the set
 // TODO maybe make molecules and pairs extend interface since they have the same bounding box functionality? if time
 
@@ -496,6 +470,7 @@ function analyzeAtomCollision(atomA, atomB) {
 
         // if two normals of the same color intersect, merge molecules
         if (aNormalBB.intersectsBox(bNormalBB)) {
+            console.log(`normal intersection #${i}`);
             return true; 
         }
 
@@ -503,11 +478,15 @@ function analyzeAtomCollision(atomA, atomB) {
         if (aNormalBB.intersectsBox(bCubeBB)) {
             // 
             if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
+                console.log(`A->B normal/face intersection #${i}`);
                 return true;
             } 
         // TODO test!
-        } else if (bNormalBB.intersectsBox(aCubeBB)) {
+        } 
+
+        if (bNormalBB.intersectsBox(aCubeBB)) {
             if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
+                console.log(`B->A normal/face intersection #${i}`);
                 return true;
             }
         }
@@ -516,6 +495,9 @@ function analyzeAtomCollision(atomA, atomB) {
 }
 
 
+/*
+ * return true if two atoms collide and will need to merge their molecules
+ */
 function findCollisions() {
     // preprocess: update the molecule bounding boxes first
     for (const mol of molecules.values()) {
