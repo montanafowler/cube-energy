@@ -223,28 +223,6 @@ class Molecule {
             // set to same orientation
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
 
-            // translate molecule to make their atom centered at our atom
-            let ourAtomPos = new THREE.Vector3();
-            ourAtomPos = ourAtom.object.getWorldPosition(ourAtomPos);
-            let theirAtomPos = new THREE.Vector3();
-            theirAtomPos = theirAtom.object.getWorldPosition(theirAtomPos);
-            let translationVec = new THREE.Vector3();
-            translationVec.copy(ourAtomPos);
-            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
-            translationVec.sub(theirAtomPos);
-            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
-            // console.log(`translationVec ${translationVec.x}`);
-            let dist = translationVec.length();
-            translationVec = translationVec.normalize();
-            // console.log(`dist ${dist}`);
-            // console.log(`translationVec ${translationVec.x}`);
-
-            // translate the molecule based on the atoms distance
-            molecule.object.translateOnAxis(translationVec, dist);
-
-            if (dist != 0)
-                console.log("NOT ZERO");
-
             // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
             
@@ -682,11 +660,10 @@ function rendeLoop() {
     if (TESTING)
         testingSimpleAnimation();
     else {
-        if (!findCollisions()) {
-            for (const molecule of molecules) {
-                animate(molecule);
-            }   
-        }
+        findCollisions();
+        for (const molecule of molecules) {
+            animate(molecule);
+        }   
     }
     
 }
