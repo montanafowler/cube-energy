@@ -8,31 +8,14 @@ import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 
-
-////// TODOS
-// write tests
-// remove unecessary files
-// upload to link page
-// move cubes along trajectories in the bounds
-// rotation on all axis
-// readme documentation
-// remove commented code
-// question about normals local/global coordinates will be answered when animating
-// Whenever a normal or face of cube A touches a normal or face of cube B, 
-// of the same color, those normals will become collinear and the cubes involved 
-// will form a rigid "molecule", and continue to travel in the invisible volume 
-// (on a linear trajectory, and rotating around the center of the molecule).
-// As an additional challenge, one could insert new atoms in the scene, 
-// either floating (when clicking in empty space) or merged into the molecule (when clicking on a compatible face).
-
 // NUMBER OF CUBES
-const NUM_CUBES = 2;
+const NUM_CUBES = 30;
 // CUBE SIZE
 const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 4;
+const BOUNDS = CUBE_SIZE * 10;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -44,12 +27,13 @@ let NUM_SIDES = 6;
 // COLORS: define random colors for the session
 function defineColors() {
     let colors = []
+    // UNCOMMENT TO USE RANDOM COLORS
     // for(let i = 0; i < NUM_SIDES; i++) {
     //     colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
     //     colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
     // }
 
-    // TEST COLORS, todo delete
+    // OFFICIAL COLORS
     colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
     colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
     colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
@@ -361,8 +345,8 @@ for (let i = 0; i < NUM_CUBES; i++) {
     molecules.add(molecule);
 
     // TODO delete
-    molecule.object.position.y = 0.0;
-    molecule.object.position.z = 0.0;
+    // molecule.object.position.y = 0.0;
+    // molecule.object.position.z = 0.0;
 
     // add the 3d obj to the scene graph
     scene.add(molecule.object);
@@ -370,12 +354,12 @@ for (let i = 0; i < NUM_CUBES; i++) {
 
 
 // TEST COLLISIONS 
-let mList = Array.from(molecules);
-mList[0].object.position.x = -3.0;
-mList[1].object.position.x = 3.0;
-mList[0].object.rotateZ(3.14159);
-mList[1].object.rotateX(.5);
-mList[1].object.rotateY(.2);
+// let mList = Array.from(molecules);
+// mList[0].object.position.x = -3.0;
+// mList[1].object.position.x = 3.0;
+// mList[0].object.rotateZ(3.14159);
+// mList[1].object.rotateX(.5);
+// mList[1].object.rotateY(.2);
 
 function testCrossProduct() {
 
@@ -758,10 +742,10 @@ function rendeLoop() {
     // console.log(collisionsFound);
     if (!STOP_CALCULATING) {
 
-        if (!collisionsFound && positionInBounds(mList[0].object.position)) {
-            mList[0].object.translateX(-0.01);
+        if (!collisionsFound) {// && positionInBounds(mList[0].object.position)) {
+            // mList[0].object.translateX(-0.01);
             for (const molecule of molecules) {
-                // animate(molecule);
+                animate(molecule);
             }   
         } else {
            // STOP_CALCULATING = true;
