@@ -408,22 +408,6 @@ function testingSimpleAnimation() {
 }
 
 
-/// molecule transformations test
-// var molecule = new THREE.Object3D();
-// const g = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE); 
-// const cube1 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'blue'})); 
-// const cube2 = new THREE.Mesh(g, new THREE.MeshLambertMaterial( {color: 'green'}))
-// molecule.add(cube1);
-// molecule.add(cube2);
-// cube2.position.x = cube2.position.x + CUBE_SIZE;
-// scene.add(molecule);
-
-
-// molecules could become dead, so i create the pairs once and if we visit dead molecules we remove them from the set
-// TODO maybe make molecules and pairs extend interface since they have the same bounding box functionality? if time
-
-// TO TEST: multiple atoms in one molecule
-
 /*
  * return true if atoms' normals of the same color are intersecting
  */
@@ -512,24 +496,19 @@ function analyzeAtomCollision(atomA, atomB) {
 
         // if two normals of the same color intersect, merge molecules
         if (aNormalBB.intersectsBox(bNormalBB)) {
-            // console.log(`normal intersection #${i}`);
-            // atomA.absorbMolecule(atomB, i);
             return i; 
         }
 
-        // does either normal overlap with the Cube of the other ?
+        // A Normal -> B Cube
         if (aNormalBB.intersectsBox(bCubeBB)) {
-            // 
             if (doesNormalHitCorrectCubeFace(atomA.normals[i], i, atomA, atomB)) {
-                // console.log(`A->B normal/face intersection #${i}`);
-                // atomA.absorbMolecule(atomB, i);
                 return i;
             } 
         } 
-        // TODO test 
+
+        // B Normal -> A Cube
         if (bNormalBB.intersectsBox(aCubeBB)) {
             if (doesNormalHitCorrectCubeFace(atomB.normals[i], i, atomB, atomA)) {
-                // console.log(`B->A normal/face intersection #${i}`);
                 return i;
             }
         }
@@ -548,7 +527,7 @@ function findCollisions() {
     }
 
     let comparisons = new Set();
-    let mergeMoleculeIndex = -1;
+    let mergeMoleculeIndex = -1; // will be >= 0 if we want to merge two faces
 
     for (const molA of molecules.values()) {
         for (const molB of molecules.values()) {
@@ -561,15 +540,10 @@ function findCollisions() {
             comparisons.add(`${molA.id}_${molB.id}`);
             comparisons.add(`${molB.id}_${molA.id}`);
 
-            // console.log(`comparing molecules ${molA.id}_${molB.id}`);
-
             // if bounding boxes do not intersect, skip
             if (!molA.boundingBox.intersectsBox(molB.boundingBox)) {
                 continue;
             }
-
-            // console.log(`${molA.id} intersects ${molB.id}`);
-
 
             // now compare the atoms in the colliding molecules to see which overlap
             for (const atomA of molA.atoms) {
@@ -592,18 +566,21 @@ function findCollisions() {
                     mergeMoleculeIndex = analyzeAtomCollision(atomA, atomB);
 
                     // break loop since we want to merge molecules
-                    if (mergeMoleculeIndex >= 0)
+                    if (mergeMoleculeIndex >= 0) {
                         break;
+                    }
                 }
 
                 // break loop since we want to merge molecules
-                if (mergeMoleculeIndex >= 0)
+                if (mergeMoleculeIndex >= 0) {
                     break;
+                }
             }
 
             // merge molecules
             if (mergeMoleculeIndex >= 0) {
-                molA.absorbMolecule(molB, mergeMoleculeIndex);
+                // TODO have molecule merge knowing position of the two atom collision
+                molA.absorbMolecule(molB, mergeMoleculeIndex); 
             }
         }
     }
