@@ -32,7 +32,7 @@ const CUBE_SIZE = 2;
 // NORMAL SIZE
 const NORM_SIZE = 0.1;
 // VOLUME: define invisible volume cubes float around in
-const BOUNDS = CUBE_SIZE * 5;
+const BOUNDS = CUBE_SIZE * 4;
 // TRANSLATION step distance
 const STEP = 0.1;
 // shows the next available id
@@ -216,32 +216,56 @@ class Molecule {
             // just add molecule as child for scene graph 
             // automatically makes molecule no longer parented to the scene
             this.#object.add(molecule.object);
-            console.log(`molecule.parent: ${molecule.object.parent}`)
             molecules.delete(molecule); // remove molecule from overall set
-            console.log(`molecules.size ${molecules.size}`);
 
             // add atoms to list for collisions
             for (const atom of molecule.atoms) {
                 this.#atoms.add(atom);
             }
-            // this.#atoms = this.#atoms.union(new Set(Array.from(molecule.atoms)));
-            console.log(`NEW ATOMS SIZE for ${this.#id}: ${this.#atoms.size}`);
 
-            // match rotation
-            // molecule.object.quaternion.copy(this.#object.quaternion);
+            // set molecule position
             molecule.object.position.x = 0.0;
             molecule.object.position.y = 0.0;
             molecule.object.position.z = 0.0;
 
+            //
+            // let oldRot = molecule.object.quaternion;
+            // set to same orientation
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
 
             // direction to shift the normal along the axis for the face
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
-            console.log(normalIndex);
-            console.log(FACE_AXES.length);
+            // console.log(normalIndex);
+            // console.log(FACE_AXES.length);
+            
             // build the normal
-            let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction);
-            console.log(`shiftPosition ${shiftPosition}`);
+            let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction).normalize();
+            // console.log(`shiftPosition ${shiftPosition}`);
+            // let perpNormal = shiftPosition.x > 0.0 ? FACE_AXES[2] : FACE_AXES[0];
+            if (shiftPosition.x != 0.0) {
+                molecule.object.rotateY(Math.PI);
+            } else {
+                molecule.object.rotateX(Math.PI);
+            }
+            let newRot = molecule.object.quaternion;
+
+            molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
+
+
+            // molecule.object.setRotationFromAxisAngle();
+            molecule.object.translateOnAxis(shiftPosition, CUBE_SIZE * 1.5);
+
+            if (shiftPosition.x != 0.0) {
+                molecule.object.rotateY(Math.PI);
+            } else {
+                molecule.object.rotateX(Math.PI);
+            }
+
+            // molecule.object.applyQuaternion(newRot);
+
+            // molecule.object.rotateY(Math.PI);
+            // molecule.object.lookAt(new THREE.Vector3());
+            // molecule.object.setRotationFromQuaternion(oldRot.normalize());
         }
     }
 
@@ -349,8 +373,73 @@ for (let i = 0; i < NUM_CUBES; i++) {
 let mList = Array.from(molecules);
 mList[0].object.position.x = -3.0;
 mList[1].object.position.x = 3.0;
-// // mList[0].object.rotateX(3.14159);
-// mList[1].object.rotateZ(3.14159);
+mList[0].object.rotateZ(3.14159);
+mList[1].object.rotateX(.5);
+mList[1].object.rotateY(.2);
+
+function testCrossProduct() {
+
+
+
+
+    let normalIndex = 1;
+    let normalAtom = mList[0];
+    let normalAtomWorldPos = new THREE.Vector3();
+    // let normalAtomNormPos = new THREE.Vector3();
+    // shoot ray along normal from normalAtom center in world coord
+    normalAtomWorldPos = normalAtom.object.getWorldPosition(normalAtomWorldPos);
+    // transform the normal we are checking into the atom's transformation
+    let posNegDir = normalIndex % 2 == 0 ? 1.0 : -1.0;
+    let normalLocal = FACE_AXES[normalIndex].multiplyScalar(posNegDir);
+    let normalWorld = new THREE.Vector3();
+    normalWorld.copy(normalLocal);
+    normalWorld.applyMatrix3(normalAtom.object.matrixWorld).normalize();
+
+    let faceAtom = mList[1];
+    let faceAtomWorldPos = new THREE.Vector3();
+    // shoot ray along normal from normalAtom center in world coord
+    faceAtomWorldPos = faceAtom.object.getWorldPosition(faceAtomWorldPos);
+
+    let normalFaceWorld = new THREE.Vector3();
+    normalFaceWorld.copy(normalLocal);
+    normalFaceWorld.applyMatrix3(faceAtom.object.matrixWorld).normalize();
+
+    let crossProduct = new THREE.Vector3();
+    crossProduct.crossVectors(normalFaceWorld, normalWorld);
+
+    console.log(`normalFaceWorld ${normalFaceWorld.x}, ${normalFaceWorld.y}, ${normalFaceWorld.z}`);
+    console.log(`normalWorld ${normalWorld.x}, ${normalWorld.y}, ${normalWorld.z}`);
+    console.log(`crossProduct ${crossProduct.x}, ${crossProduct.y}, ${crossProduct.z}`);
+
+    let sineOfAngle = crossProduct.length;
+    let angle = Math.asin(sineOfAngle);
+    let axis = new THREE.Vector3();
+    axis.copy(crossProduct);
+    axis.divideScalar(sineOfAngle);
+    
+    let values = new THREE.Vector3();
+    values.copy(axis);
+    values.multiplyScalar(Math.sin(angle/2.0));
+    const quaternion = new THREE.Quaternion(values.x, values.y, values.z, Math.cos(angle/2.0));
+    // quaternion.setFromAxisAngle(axis.normalize(), angle);
+    // normalAtom.object.applyQuaternion(quaternion);
+
+    // normalAtom.object.applyQuaternion(quaternion);
+    // normalAtom.object.rotateOnWorldAxis(crossProduct.normalize(), 0.2);
+
+    normalAtom.object.up = new THREE.Vector3(0.0, 1.0, 1.0);
+    var la = new THREE.Vector3().addVectors(faceAtom.object.position, normalLocal);
+    // normalAtom.object.lookAt(la);
+    let angleBetweenNormals = normalFaceWorld.angleTo(-normalWorld);
+    console.log(`angleBetweenNormals ${angleBetweenNormals}`);
+
+
+}
+// mList[1].object.rotateY(.5);
+
+function testLookAt() {
+    
+}
 
 
 // set up set of original molecule pairs
@@ -651,6 +740,7 @@ function animate(molecule) {
 }
 
 let STOP_CALCULATING = false;
+let d = 0;
 
 /////////////////////////////////////////////////////////////////////////
 //// RENDER LOOP FUNCTION
@@ -668,16 +758,23 @@ function rendeLoop() {
     // console.log(collisionsFound);
     if (!STOP_CALCULATING) {
 
-        if (!collisionsFound) { //&& positionInBounds(mList[0].object.position)) {
-            // mList[0].object.translateX(0.01);
+        if (!collisionsFound && positionInBounds(mList[0].object.position)) {
+            mList[0].object.translateX(-0.01);
             for (const molecule of molecules) {
-                animate(molecule);
+                // animate(molecule);
             }   
         } else {
            // STOP_CALCULATING = true;
         }
     }
-    
+
+    // wait(1000);
+    if (d == 100) {
+        // testCrossProduct();
+        console.log("done");
+    }
+
+    d++;
 }
 // findCollisions();
 // const colors = defineColors()
