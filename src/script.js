@@ -21,7 +21,7 @@ let NEXT_ID = 0;
 // sides of cube, don't change
 let NUM_SIDES = 6;
 // testing flag, use to test collisions between just two cubes
-let TESTING = false;
+let TESTING = true;
 
 ///////////////////////////////////////////////////////////////////////
 // COLORS: define random colors for the session
@@ -205,6 +205,40 @@ class Molecule {
 
         this.absorbMolecule = function(molecule, normalIndex, ourAtom, theirAtom) {
 
+            // set to same orientation
+            // molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
+            console.log(`our molecule: ${this.id}, their molecule: ${molecule.id}`);
+            console.log(`our atom: ${ourAtom.id}, their atom: ${theirAtom.id}`);
+
+            // translate molecule to make their atom centered at our atom
+            let ourAtomPos = new THREE.Vector3();
+            ourAtomPos = ourAtom.object.getWorldPosition(ourAtomPos);
+            console.log(`ourAtom.position: ${ourAtomPos.x}, ${ourAtomPos.z}`);
+
+            let theirAtomPos = new THREE.Vector3();
+            theirAtomPos = theirAtom.object.getWorldPosition(theirAtomPos);
+            console.log(`theirAtom.position: ${theirAtomPos.x}, ${theirAtomPos.z}`);
+
+            let ourMolObjPos = new THREE.Vector3();
+            ourMolObjPos = this.object.getWorldPosition(ourMolObjPos);
+            console.log(`ourMolObjPos.position: ${ourMolObjPos.x}, ${ourMolObjPos.z}`);
+
+            let theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
+
+            let translationVec = new THREE.Vector3();
+            translationVec.copy(ourAtomPos);
+            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
+            translationVec.sub(theirAtomPos);
+            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
+            // console.log(`translationVec ${translationVec.x}`);
+            let dist = translationVec.length();
+            translationVec = translationVec.normalize();
+            console.log(`dist ${dist}`);
+            console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
+
+
             // just add molecule as child for scene graph 
             // automatically makes molecule no longer parented to the scene
             this.#object.add(molecule.object);
@@ -215,35 +249,68 @@ class Molecule {
                 this.#atoms.add(atom); //.union() wasn't working for me
             }
 
+
+
             // set molecule position
-            molecule.object.position.x = 0.0;
-            molecule.object.position.y = 0.0;
-            molecule.object.position.z = 0.0;
+            // if (this.#atoms.size == 2) {
+            // if (ourMolObjPos.x == ourAtomPos.x 
+            //     && ourMolObjPos.y == ourAtomPos.y 
+            //     && ourMolObjPos.z == ourAtomPos.z) {
+            //     molecule.object.position.x = 0.0;
+            //     molecule.object.position.y = 0.0;
+            //     molecule.object.position.z = 0.0;
+            // } else {
+            //     molecule.object.translateOnAxis(translationVec, dist);
+            // }
+                molecule.object.position.x = 0.0;
+                molecule.object.position.y = 0.0;
+                molecule.object.position.z = 0.0;
+
+            // }
+            
+            // molecule.object.position.x = ourAtom.object.position.x;
+            // molecule.object.position.y = ourAtom.object.position.y;
+            // molecule.object.position.z = ourAtom.object.position.z;
 
             // set to same orientation
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
+            // console.log(`our molecule: ${this.id}, their molecule: ${molecule.id}`);
+            // console.log(`our atom: ${ourAtom.id}, their atom: ${theirAtom.id}`);
+            console.log("SET MOLECULE ROTATION AND POSITION to 0,0");
 
             // translate molecule to make their atom centered at our atom
-            let ourAtomPos = new THREE.Vector3();
+            ourAtomPos = new THREE.Vector3();
             ourAtomPos = ourAtom.object.getWorldPosition(ourAtomPos);
-            let theirAtomPos = new THREE.Vector3();
+            console.log(`ourAtom.position: ${ourAtomPos.x}, ${ourAtomPos.z}`);
+
+            theirAtomPos = new THREE.Vector3();
             theirAtomPos = theirAtom.object.getWorldPosition(theirAtomPos);
-            let translationVec = new THREE.Vector3();
-            translationVec.copy(ourAtomPos);
-            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
-            translationVec.sub(theirAtomPos);
-            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
-            // console.log(`translationVec ${translationVec.x}`);
-            let dist = translationVec.length();
-            translationVec = translationVec.normalize();
+            console.log(`theirAtom.position: ${theirAtomPos.x}, ${theirAtomPos.z}`);
+
+            ourMolObjPos = new THREE.Vector3();
+            ourMolObjPos = this.object.getWorldPosition(ourMolObjPos);
+            console.log(`ourMolObjPos.position: ${ourMolObjPos.x}, ${ourMolObjPos.z}`);
+
+            theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
+
+            // let translationVec = new THREE.Vector3();
+            // translationVec.copy(ourAtomPos);
+            // // console.log(`ourAtom position ${ourAtom.object.position.x}`);
+            // translationVec.sub(theirAtomPos);
+            // // console.log(`theirAtom position ${theirAtom.object.position.x}`);
+            // // console.log(`translationVec ${translationVec.x}`);
+            // let dist = translationVec.length();
+            // translationVec = translationVec.normalize();
             // console.log(`dist ${dist}`);
-            // console.log(`translationVec ${translationVec.x}`);
+            // console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
 
-            // translate the molecule based on the atoms distance
-            molecule.object.translateOnAxis(translationVec, dist);
+            // // translate the molecule based on the atoms distance
+            // molecule.object.translateOnAxis(translationVec, dist);
 
-            if (dist != 0)
-                console.log("NOT ZERO");
+            // if (dist != 0)
+            //     console.log("NOT ZERO");
 
             // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
@@ -367,7 +434,7 @@ let molTestList;
 function testTwoCubeSetup() {
     
     molecules = new Set();
-    NUM_CUBES = 2;
+    NUM_CUBES = 3;
     let molecule;
     for (let i = 0; i < NUM_CUBES; i++) {
         molecule = new Molecule();
@@ -384,6 +451,8 @@ function testTwoCubeSetup() {
     molTestList = Array.from(molecules);
     molTestList[0].object.position.x = -3.0;
     molTestList[1].object.position.x = 3.0;
+    molTestList[2].object.position.z = -4.0;
+    molTestList[2].object.position.x = 5.0;
     molTestList[0].object.rotateZ(3.14159);
     molTestList[1].object.rotateX(.5);
     molTestList[1].object.rotateY(.2);
@@ -675,21 +744,17 @@ function animate(molecule) {
 function rendeLoop() {
 
     TWEEN.update() // update animations
-
     controls.update() // update orbit controls
-
     renderer.render(scene, camera) // render the scene using the camera
-
     requestAnimationFrame(rendeLoop) //loop the render function
 
     if (TESTING)
         testingSimpleAnimation();
     else {
-        if (!findCollisions()) {
-            for (const molecule of molecules) {
-                animate(molecule);
-            }   
-        }
+        findCollisions();
+        for (const molecule of molecules) {
+            animate(molecule);
+        }   
     }
     
 }
