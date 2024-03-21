@@ -227,16 +227,7 @@ class Molecule {
             theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
             console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
 
-            let translationVec = new THREE.Vector3();
-            translationVec.copy(ourAtomPos);
-            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
-            translationVec.sub(theirAtomPos);
-            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
-            // console.log(`translationVec ${translationVec.x}`);
-            let dist = translationVec.length();
-            translationVec = translationVec.normalize();
-            console.log(`dist ${dist}`);
-            console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
+          
 
 
             // just add molecule as child for scene graph 
@@ -295,6 +286,25 @@ class Molecule {
             theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
             console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
 
+            let translationVec = new THREE.Vector3();
+            translationVec.copy(ourAtomPos);
+            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
+            translationVec.sub(theirAtomPos);
+            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
+            // console.log(`translationVec ${translationVec.x}`);
+            let dist = translationVec.length();
+            translationVec = translationVec.normalize();
+            console.log(`dist ${dist}`);
+            console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
+
+            theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`BEFORE theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
+            molecule.object.translateOnAxis(translationVec, dist);
+            theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`AFTER theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
+
             // let translationVec = new THREE.Vector3();
             // translationVec.copy(ourAtomPos);
             // // console.log(`ourAtom position ${ourAtom.object.position.x}`);
@@ -312,10 +322,22 @@ class Molecule {
             // if (dist != 0)
             //     console.log("NOT ZERO");
 
+
+            for (const a of this.#atoms) {
+                let v = new THREE.Vector3();
+                v = a.object.getWorldPosition(v);
+                console.log(`now atom #${a.id} at ${v.x}, ${v.z}`)
+            }
+
+
+
+            // uncomment
+
             // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
-            
-            // shift the new atom along locally along the normal
+
+            if (this.#atoms.size == 2) {
+                // shift the new atom along locally along the normal
             let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction).normalize();
             molecule.object.translateOnAxis(shiftPosition, CUBE_SIZE * 1.5);
 
@@ -325,6 +347,9 @@ class Molecule {
             } else {
                 molecule.object.rotateX(Math.PI);
             }
+            }
+            
+            
         }
     }
 
