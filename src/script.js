@@ -232,7 +232,9 @@ class Molecule {
 
             // just add molecule as child for scene graph 
             // automatically makes molecule no longer parented to the scene
-            this.#object.add(molecule.object);
+            // this.#object.add(molecule.object);
+            ourAtom.object.parent.add(molecule.object);
+            // console.log(`${outAtom.object.parent}`)
             molecules.delete(molecule); // remove molecule from overall set
 
             // add atoms to list for collisions
@@ -293,14 +295,17 @@ class Molecule {
             // console.log(`theirAtom position ${theirAtom.object.position.x}`);
             // console.log(`translationVec ${translationVec.x}`);
             let dist = translationVec.length();
-            translationVec = translationVec.normalize();
+            translationVec = translationVec;//.normalize();
             console.log(`dist ${dist}`);
             console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
 
             theirMolObjPos = new THREE.Vector3();
             theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
             console.log(`BEFORE theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-            molecule.object.translateOnAxis(translationVec, dist);
+            // molecule.object.translateOnAxis(translationVec, dist);
+            // molecule.object.position.x = molecule.object.position.x + translationVec.x;
+            // molecule.object.position.y = molecule.object.position.y + translationVec.y;
+            // molecule.object.position.z = molecule.object.position.z + translationVec.z;
             theirMolObjPos = new THREE.Vector3();
             theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
             console.log(`AFTER theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
@@ -336,10 +341,16 @@ class Molecule {
             // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
 
-            if (this.#atoms.size == 2) {
+            // if (this.#atoms.size == 2) {
+                theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`BEFORE2 theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
                 // shift the new atom along locally along the normal
             let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction).normalize();
             molecule.object.translateOnAxis(shiftPosition, CUBE_SIZE * 1.5);
+            theirMolObjPos = new THREE.Vector3();
+            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
+            console.log(`AFTER2 theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
 
             // rotate around a perpendicular axis to keep the faces facing each other locally
             if (shiftPosition.x != 0.0) {
@@ -347,7 +358,7 @@ class Molecule {
             } else {
                 molecule.object.rotateX(Math.PI);
             }
-            }
+            // }
             
             
         }
