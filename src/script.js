@@ -28,18 +28,18 @@ let TESTING = true;
 function defineColors() {
     let colors = []
     // UNCOMMENT TO USE RANDOM COLORS INSTEAD
-    // for(let i = 0; i < NUM_SIDES; i++) {
-    //     colors.push(new THREE.MeshLambertMaterial( {color: 'lightgrey'}));
-    //     colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
-    // }
+    for(let i = 0; i < NUM_SIDES; i++) {
+        colors.push(new THREE.MeshLambertMaterial( {color: 'white'}));
+        colors[i].color.setRGB(Math.random(), Math.random(), Math.random());
+    }
 
     // OFFICIAL COLORS
-    colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
-    colors.push(new THREE.MeshLambertMaterial( {color: 'purple'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'yellow'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'green'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'red'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'blue'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'pink'}));
+    // colors.push(new THREE.MeshLambertMaterial( {color: 'purple'}));
 
     return colors;
 }
@@ -203,38 +203,14 @@ class Molecule {
         }
         this.updateBoundingBox();
 
-        this.absorbMolecule = function(molecule, normalIndex, ourAtom, theirAtom) {
+        this.absorbMolecule = function(molecule, normalIndex, ourAtom) {
 
-            // set to same orientation
-            // molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
-            console.log(`our molecule: ${this.id}, their molecule: ${molecule.id}`);
-            console.log(`our atom: ${ourAtom.id}, their atom: ${theirAtom.id}`);
-
-            // translate molecule to make their atom centered at our atom
-            let ourAtomPos = new THREE.Vector3();
-            ourAtomPos = ourAtom.object.getWorldPosition(ourAtomPos);
-            console.log(`ourAtom.position: ${ourAtomPos.x}, ${ourAtomPos.z}`);
-
-            let theirAtomPos = new THREE.Vector3();
-            theirAtomPos = theirAtom.object.getWorldPosition(theirAtomPos);
-            console.log(`theirAtom.position: ${theirAtomPos.x}, ${theirAtomPos.z}`);
-
-            let ourMolObjPos = new THREE.Vector3();
-            ourMolObjPos = this.object.getWorldPosition(ourMolObjPos);
-            console.log(`ourMolObjPos.position: ${ourMolObjPos.x}, ${ourMolObjPos.z}`);
-
-            let theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-
-          
-
-
-            // just add molecule as child for scene graph 
-            // automatically makes molecule no longer parented to the scene
-            // this.#object.add(molecule.object);
+            // add molecule as child of the molecule who's atom we hit
+            //      M (root molecule)
+            //      A    M (parent)
+            //           A     M (molecule to merge)
+            //                 A
             ourAtom.object.parent.add(molecule.object);
-            // console.log(`${outAtom.object.parent}`)
             molecules.delete(molecule); // remove molecule from overall set
 
             // add atoms to list for collisions
@@ -243,114 +219,19 @@ class Molecule {
             }
 
 
-
-            // set molecule position
-            // if (this.#atoms.size == 2) {
-            // if (ourMolObjPos.x == ourAtomPos.x 
-            //     && ourMolObjPos.y == ourAtomPos.y 
-            //     && ourMolObjPos.z == ourAtomPos.z) {
-            //     molecule.object.position.x = 0.0;
-            //     molecule.object.position.y = 0.0;
-            //     molecule.object.position.z = 0.0;
-            // } else {
-            //     molecule.object.translateOnAxis(translationVec, dist);
-            // }
-                molecule.object.position.x = 0.0;
-                molecule.object.position.y = 0.0;
-                molecule.object.position.z = 0.0;
-
-            // }
-            
-            // molecule.object.position.x = ourAtom.object.position.x;
-            // molecule.object.position.y = ourAtom.object.position.y;
-            // molecule.object.position.z = ourAtom.object.position.z;
+            molecule.object.position.x = 0.0;
+            molecule.object.position.y = 0.0;
+            molecule.object.position.z = 0.0;
 
             // set to same orientation
             molecule.object.setRotationFromQuaternion(new THREE.Quaternion().normalize());
-            // console.log(`our molecule: ${this.id}, their molecule: ${molecule.id}`);
-            // console.log(`our atom: ${ourAtom.id}, their atom: ${theirAtom.id}`);
-            console.log("SET MOLECULE ROTATION AND POSITION to 0,0");
-
-            // translate molecule to make their atom centered at our atom
-            ourAtomPos = new THREE.Vector3();
-            ourAtomPos = ourAtom.object.getWorldPosition(ourAtomPos);
-            console.log(`ourAtom.position: ${ourAtomPos.x}, ${ourAtomPos.z}`);
-
-            theirAtomPos = new THREE.Vector3();
-            theirAtomPos = theirAtom.object.getWorldPosition(theirAtomPos);
-            console.log(`theirAtom.position: ${theirAtomPos.x}, ${theirAtomPos.z}`);
-
-            ourMolObjPos = new THREE.Vector3();
-            ourMolObjPos = this.object.getWorldPosition(ourMolObjPos);
-            console.log(`ourMolObjPos.position: ${ourMolObjPos.x}, ${ourMolObjPos.z}`);
-
-            theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-
-            let translationVec = new THREE.Vector3();
-            translationVec.copy(ourAtomPos);
-            // console.log(`ourAtom position ${ourAtom.object.position.x}`);
-            translationVec.sub(theirAtomPos);
-            // console.log(`theirAtom position ${theirAtom.object.position.x}`);
-            // console.log(`translationVec ${translationVec.x}`);
-            let dist = translationVec.length();
-            translationVec = translationVec;//.normalize();
-            console.log(`dist ${dist}`);
-            console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
-
-            theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`BEFORE theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-            // molecule.object.translateOnAxis(translationVec, dist);
-            // molecule.object.position.x = molecule.object.position.x + translationVec.x;
-            // molecule.object.position.y = molecule.object.position.y + translationVec.y;
-            // molecule.object.position.z = molecule.object.position.z + translationVec.z;
-            theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`AFTER theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-
-            // let translationVec = new THREE.Vector3();
-            // translationVec.copy(ourAtomPos);
-            // // console.log(`ourAtom position ${ourAtom.object.position.x}`);
-            // translationVec.sub(theirAtomPos);
-            // // console.log(`theirAtom position ${theirAtom.object.position.x}`);
-            // // console.log(`translationVec ${translationVec.x}`);
-            // let dist = translationVec.length();
-            // translationVec = translationVec.normalize();
-            // console.log(`dist ${dist}`);
-            // console.log(`translationVec ${translationVec.x}, ${translationVec.z}`);
-
-            // // translate the molecule based on the atoms distance
-            // molecule.object.translateOnAxis(translationVec, dist);
-
-            // if (dist != 0)
-            //     console.log("NOT ZERO");
-
-
-            for (const a of this.#atoms) {
-                let v = new THREE.Vector3();
-                v = a.object.getWorldPosition(v);
-                console.log(`now atom #${a.id} at ${v.x}, ${v.z}`)
-            }
-
-
-
-            // uncomment
 
             // local normal direction of the face we are attaching (ex. +x or -x)
             let direction = normalIndex % 2 == 0 ? 1.0 : -1.0;
-
-            // if (this.#atoms.size == 2) {
-                theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`BEFORE2 theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
-                // shift the new atom along locally along the normal
+                
+            // shift the new atom along locally along the normal
             let shiftPosition = FACE_AXES[normalIndex].multiplyScalar(direction).normalize();
             molecule.object.translateOnAxis(shiftPosition, CUBE_SIZE * 1.5);
-            theirMolObjPos = new THREE.Vector3();
-            theirMolObjPos = molecule.object.getWorldPosition(theirMolObjPos);
-            console.log(`AFTER2 theirMolObjPos.position: ${theirMolObjPos.x}, ${theirMolObjPos.z}`);
 
             // rotate around a perpendicular axis to keep the faces facing each other locally
             if (shiftPosition.x != 0.0) {
@@ -358,9 +239,6 @@ class Molecule {
             } else {
                 molecule.object.rotateX(Math.PI);
             }
-            // }
-            
-            
         }
     }
 
@@ -648,6 +526,10 @@ function analyzeAtomCollision(atomA, atomB) {
  * return true if two atoms collide and will need to merge their molecules
  */
 function findCollisions() {
+    // if there is just one molecule, no need to check for collisions
+    if (molecules.size < 2)
+        return false;
+
     // preprocess: update the molecule bounding boxes first
     for (const mol of molecules.values()) {
         mol.updateBoundingBox();
@@ -656,7 +538,6 @@ function findCollisions() {
     let comparisons = new Set();
     let mergeMoleculeIndex = -1; // will be >= 0 if we want to merge two faces
     let atomACollided;
-    let atomBCollided;
 
     for (const molA of molecules.values()) {
         for (const molB of molecules.values()) {
@@ -697,7 +578,6 @@ function findCollisions() {
                     // break loop since we want to merge molecules
                     if (mergeMoleculeIndex >= 0) {
                         atomACollided = atomA;
-                        atomBCollided = atomB;
                         break;
                     }
                 }
@@ -711,7 +591,7 @@ function findCollisions() {
             // merge molecules
             if (mergeMoleculeIndex >= 0) {
                 // TODO have molecule merge knowing position of the two atom collision
-                molA.absorbMolecule(molB, mergeMoleculeIndex, atomACollided, atomBCollided); 
+                molA.absorbMolecule(molB, mergeMoleculeIndex, atomACollided); 
             }
         }
     }
